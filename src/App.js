@@ -8,6 +8,7 @@ import {
 } from 'boardgame.io/react';
 
 import { Local } from 'boardgame.io/multiplayer';
+import { TurnOrder } from 'boardgame.io/core';
 
 
 
@@ -136,6 +137,22 @@ const CHARACTERS = [
   "Will Griggs"
 ]
 
+function initializePlayers(numPlayers) {
+  let defaultPlayers = {}
+  for(let playerId = 0; playerId < numPlayers; playerId++) {
+    defaultPlayers[playerId] = {
+      isWitch: false,
+      isConstable: false,
+      character: "",
+      hand: [],
+      tryalCards: [],
+      appliedStatusCards: []
+    }
+  }
+
+  return defaultPlayers;
+}
+
 const Salem = {
   setup: (ctx) => {
     let salemDeck = [];
@@ -155,15 +172,12 @@ const Salem = {
     let witchDeck = ctx.random.Shuffle(witchCardDeck);
     let characterDeck = ctx.random.Shuffle(CHARACTERS);
 
-    let characterState = {};
-    let witchHand = {};
-    let handState = {};
-    let witchState = {};
-    let constableState = {};
+    let playerState = initializePlayers(ctx.numPlayers);
 
     // Assign characters
     for(let player of ctx.playOrder) {
-      characterState[player] = characterDeck.pop();
+
+      playerState[player].character = characterDeck.pop();
     }
 
 
@@ -173,26 +187,22 @@ const Salem = {
         let cardToAdd = witchDeck.pop();
 
         if(cardToAdd.type === "WITCH") {
-          witchState[player] = true;
+          playerState[player].isWitch = true;
         }
 
         if(cardToAdd.type === "CONSTABLE") {
-          constableState[player] = true;
+          playerState[player].isConstable = true;
         }
 
-        
-        if(witchHand[player] === undefined) {
-          witchHand[player] = [cardToAdd]
-        }
-        else {
-          witchHand[player].push(cardToAdd);
-        }
+        playerState[player].tryalCards.push(cardToAdd);    
       }
     }
 
     // Assign hand
     for(let player of ctx.playOrder) {
-      handState[player] = [salemDeck.pop(), salemDeck.pop(), salemDeck.pop()];
+      playerState[player].hand.push(salemDeck.pop());
+      playerState[player].hand.push(salemDeck.pop());
+      playerState[player].hand.push(salemDeck.pop());
     }
 
 
@@ -207,21 +217,60 @@ const Salem = {
     salemDeck = salemDeck.concat(nightCard);
 
     return {
-      characterState,
-      witchHand,
-      witchState,
-      constableState,
-      handState,
+      playerState,
       salemDeck,
       salemDiscard: []
-      //salemDeck,
-      //witchDeck,
-      //characterDeck
     };
+  },
+  moves: {
+    play() {
+
+    }
   },
 
   phases: {
     dawn: {
+      endIf: (G, ctx) => {
+        let totalVotes = 0;
+        for(let playerId in G.dawnVotes) {
+          totalVotes += G.dawnVotes[playerId]
+        }
+
+        let numWitches = 0;
+
+        for(let playerId in G.playerState) {
+          if(G.playerState[playerId].isWitch === true) {
+            numWitches++;
+          } 
+        }
+
+        
+
+        if(totalVotes === numWitches) {
+          return true
+        }
+
+
+        return false;
+      },
+      onEnd: (G, ctx) => {
+        let playersWithVotes = [];
+        for(let playerId in G.dawnVotes) {
+          playersWithVotes.push(playerId);
+        }
+
+        let playerToAssignBlackCat;
+
+        if(playersWithVotes.length > 1) {
+          playerToAssignBlackCat = playersWithVotes[ctx.random.Die(playersWithVotes.length) - 1];
+        }
+        else {
+          playerToAssignBlackCat = playersWithVotes[0];
+        }
+        let blackCatCard = generateSalemCardType("Blackcat", 1);
+        G.playerState[playerToAssignBlackCat].appliedStatusCards.push(blackCatCard);
+
+      },
       onBegin: (G, ctx) => {
         G.dawnVotes = {}
       },
@@ -233,21 +282,26 @@ const Salem = {
           else {
             G.dawnVotes[playerId]++; 
           }
-          
+        
         }
       },
       start: true,
+      next: "mainGame",
 
       turn: {
         order: {
 
-          first: (G, ctx) => 0,
-          next: (G, ctx) => ctx.playerOrderPos + 1,
+          first: (G, ctx) => {return 0},
+          next: (G, ctx) => {
+           return ctx.playOrderPos + 1
+          },
 
           playOrder: (G, ctx) => {
             let witches = [];
-            for(let witch in G.witchState) {
-              witches.push(witch);
+            for(let playerId = 0; playerId < ctx.numPlayers; playerId++) {
+              if(G.playerState[playerId].isWitch) {
+                witches.push(playerId);
+              }
             }
             return witches;
           }
@@ -255,17 +309,51 @@ const Salem = {
       }
 
       
+    },
+    mainGame: {
+      turn: {
+        order: TurnOrder.RESET,
+      },
+      stages: {
+        drawCards: {
+          moves: {
+            drawCard(G, ctx) {
+              console.log(G, ctx);
+            }
+          }
+        },
+        playCards: {
+          moves: {
+            playCard(G, ctx, cardToPlay) {
+
+            }
+          }
+        }
+      }
     }
   },
 
 }
 
-const App = Client({
+const SalemClient = Client({
   game: Salem,
-  numPlayers: 4,
-  board: Board
-  //multiplayer: Local()
+  numPlayers: 8,
+  board: Board,
+  multiplayer: Local()
 });
+
+const App = () => (
+  <div>
+  <SalemClient playerID="0" />
+  <SalemClient playerID="1" />
+  <SalemClient playerID="2" />
+  <SalemClient playerID="3" />
+  <SalemClient playerID="4" />
+  <SalemClient playerID="5" />
+  <SalemClient playerID="6" />
+  <SalemClient playerID="7" />
+</div>
+)
 
 
 

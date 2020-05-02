@@ -12,28 +12,6 @@ import { TurnOrder } from 'boardgame.io/core';
 
 
 
-/*
-const TicTacToe = {
-  setup: () => ({ cells: Array(9).fill(null) }),
-
-  moves: {
-    clickCell: (G, ctx, id) => {
-      if (G.cells[id] === null) {
-        G.cells[id] = ctx.currentPlayer;
-      }
-    },
-  },
-
-  endIf: (G, ctx) => {
-    if (IsVictory(G.cells)) {
-      return { winner: ctx.currentPlayer };
-    }
-    if (IsDraw(G.cells)) {
-      return { draw: true };
-    }
-  },
-};
-*/
 
 function generateSalemCardType(title, numberOfCards = 0) {
   let cards = [];
@@ -64,11 +42,6 @@ const CARDS_DEF = {
   "Piety": 1
 }
 
-/*
-  "Blackcat": 1,
-  "Night": 1,
-  "Conspiracy": 1
-*/
 
 const SETUPS = {
   4: {
@@ -151,6 +124,12 @@ function initializePlayers(numPlayers) {
   }
 
   return defaultPlayers;
+}
+
+function drawCardFromDeck(G, ctx) {
+  let cardToAssign = G.salemDeck.shift();
+  let playerState = G.playerState;
+  playerState[ctx.currentPlayer].hand.push(cardToAssign);
 }
 
 const Salem = {
@@ -313,23 +292,35 @@ const Salem = {
     mainGame: {
       turn: {
         order: TurnOrder.RESET,
-      },
-      stages: {
-        drawCards: {
-          moves: {
-            drawCard(G, ctx) {
-              console.log(G, ctx);
-            }
+        onBegin: (G, ctx) => {
+          G.drawnCardsThisTurn = 0
+          return G;
+        },
+
+        endIf: (G, ctx) => {
+          if(G.drawnCardsThisTurn === 2) {
+            return true;
           }
         },
-        playCards: {
-          moves: {
-            playCard(G, ctx, cardToPlay) {
-
+        stages: {
+          drawCards: {
+            moves: {
+              drawCard(G, ctx) {
+                drawCardFromDeck(G, ctx);
+                G.drawnCardsThisTurn++;
+              }
+            }
+          },
+          playCards: {
+            moves: {
+              playCard(G, ctx, cardToPlay) {
+                
+              }
             }
           }
         }
-      }
+      },
+
     }
   },
 

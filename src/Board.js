@@ -16,11 +16,37 @@ export default class SalemBoard extends React.Component {
   }
 
   drawCard() {
+    console.log(this.props.G);
     this.props.moves.drawCard();
   }
 
   playCard(card, playerId) {
     this.props.moves.playCard(card, playerId);
+  }
+
+  renderOtherPlayers(playerID) {
+    let playersToRender = [];
+    for(let playerId of this.props.ctx.playOrder) {
+      //this.props.G.playerState[playerId];
+
+      if(playerId !== playerID) {
+        playersToRender.push(<button>{this.props.G.playerState[playerId].character}</button>);
+      }
+    }
+    return playersToRender;
+  }
+
+  renderCardsInHand(playerID) {
+    let cardsInHand = this.props.G.playerState[playerID].hand;
+    let cardsToRender = []
+    for(let card of cardsInHand) {
+      cardsToRender.push(
+        <button onClick={() => this.playCard(card)}>
+          {card.title}
+        </button>
+      )
+    }
+    return (<div>{cardsToRender}</div>)
   }
 
   render() {
@@ -64,10 +90,13 @@ export default class SalemBoard extends React.Component {
 
         if(this.props.ctx.activePlayers) {
           if(this.props.ctx.activePlayers[this.props.playerID] === "drawCards") {
-            return (<div><button> Draw cards</button></div>)
+            return (<div><button onClick={() => this.drawCard()}> Draw card</button></div>)
           }
           else if(this.props.ctx.activePlayers[this.props.playerID] === "playCards") {
-            return (<div>Playing cards</div>)
+            let cards = this.renderCardsInHand(this.props.playerID);
+            let players = this.renderOtherPlayers(this.props.playerID);
+
+            return (<div>{cards}{players}</div>)
           }
         }
         else {

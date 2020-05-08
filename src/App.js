@@ -1,6 +1,6 @@
 import React from 'react';
 import logo from './logo.svg';
-import './App.css';
+import './App.scss';
 import Board from './Board';
 
 import {
@@ -9,6 +9,9 @@ import {
 
 import { Local } from 'boardgame.io/multiplayer';
 import { TurnOrder } from 'boardgame.io/core';
+import update from 'immutability-helper';
+import { removeCardFromCurrentPlayer, playRed, playBlue, playGreen } from './utils/playSalemCards';
+import { getCurrentPlayerState, getPlayerState } from './utils/getPlayerState';
 
 
 
@@ -16,11 +19,16 @@ import { TurnOrder } from 'boardgame.io/core';
 function generateSalemCardType(title, numberOfCards = 0) {
   let cards = [];
 
+  let cardIdParts = title.split("_");
+  let cardTitle = cardIdParts[0];
+  let cardColour = cardIdParts[1];
+
   for (let i = 0; i < numberOfCards; i++) {
     cards.push({
-      id: `${title}-${i}`,
-      title: `${title}`,
-      type: title.toUpperCase()
+      id: `${cardTitle}-${i}`,
+      title: `${cardTitle}`,
+      type: cardTitle.toUpperCase(),
+      colour: cardColour
     })
   }
   return cards;
@@ -28,19 +36,21 @@ function generateSalemCardType(title, numberOfCards = 0) {
 
 
 const CARDS_DEF = {
-  "Accusation": 35,
-  "Evidence": 5,
-  "Witness": 1,
-  "Stocks": 3,
-  "Alibi": 3,
-  "Scapegoat": 2,
-  "Arson": 1,
-  "Robbery": 1,
-  "Curse": 1,
-  "Matchmaker": 2,
-  "Asylum": 1,
-  "Piety": 1
+  "Accusation_RED": 35, //red
+  "Evidence_RED": 5, // red
+  "Witness_RED": 1, // red
+  "Stocks_GREEN": 3, // green
+  "Alibi_GREEN": 3, // green
+  "Scapegoat_GREEN": 2, // green
+  "Arson_GREEN": 1, // green
+  "Robbery_GREEN": 1, // green
+  "Curse_BLUE": 1, // blue 
+  "Matchmaker_BLUE": 2, // blue
+  "Asylum_BLUE": 1, // blue
+  "Piety_BLUE": 1 // blue
 }
+
+
 
 
 const SETUPS = {
@@ -92,6 +102,7 @@ const SETUPS = {
 
 }
 
+
 const CHARACTERS = [
   "Ann Putnam",
   "Giles Corey",
@@ -119,7 +130,9 @@ function initializePlayers(numPlayers) {
       character: "",
       hand: [],
       tryalCards: [],
-      appliedStatusCards: []
+      appliedBlueCards: [],
+      appliedRedCards: [],
+      appliedGreenCards: [],
     }
   }
 
@@ -185,8 +198,8 @@ const Salem = {
     }
 
 
-    let conspiracyCard = generateSalemCardType("Conspiracy", 1);
-    let nightCard = generateSalemCardType("Night", 1);
+    let conspiracyCard = generateSalemCardType("Conspiracy_BLACK", 1);
+    let nightCard = generateSalemCardType("Night_BLACK", 1);
 
     // Add conspiracy
     salemDeck = salemDeck.concat(conspiracyCard);
@@ -246,7 +259,7 @@ const Salem = {
         else {
           playerToAssignBlackCat = playersWithVotes[0];
         }
-        let blackCatCard = generateSalemCardType("Blackcat", 1);
+        let blackCatCard = generateSalemCardType("Blackcat_BLUE", 1);
         G.playerState[playerToAssignBlackCat].appliedStatusCards.push(blackCatCard);
 
       },
@@ -313,8 +326,18 @@ const Salem = {
           },
           playCards: {
             moves: {
-              playCard(G, ctx, cardToPlay) {
-                
+              playCard(G, ctx, cardToPlay, targetPlayer) {
+                removeCardFromCurrentPlayer(G, ctx, cardToPlay);
+
+                if(cardToPlay.colour === "RED") {
+                  playRed(G, ctx, cardToPlay, targetPlayer)
+                }
+                else if(cardToPlay.colour === "GREEN") {
+                  playGreen(G, ctx, cardToPlay, targetPlayer)
+                }
+                else if(cardToPlay.colour === "BLUE") {
+                  playBlue(G, ctx, cardToPlay, targetPlayer)
+                }
               }
             }
           }
@@ -325,6 +348,9 @@ const Salem = {
   },
 
 }
+
+
+
 
 const SalemClient = Client({
   game: Salem,

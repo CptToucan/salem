@@ -1,19 +1,20 @@
-import React from 'react';
-import Button from '@material-ui/core/Button';
+import React from "react";
+import Button from "@material-ui/core/Button";
+import Character from "./components/Character";
+import PlayCard from "./components/PlayCard";
 
 export default class SalemBoard extends React.Component {
-
   dawnClickPlayer(playerId) {
     this.props.moves.voteBlackCat(playerId);
     this.props.events.endTurn();
   }
 
   playCards() {
-    this.props.events.setStage('playCards');
+    this.props.events.setStage("playCards");
   }
 
   drawCards() {
-    this.props.events.setStage('drawCards');
+    this.props.events.setStage("drawCards");
   }
 
   drawCard() {
@@ -25,31 +26,6 @@ export default class SalemBoard extends React.Component {
     this.props.moves.playCard(card, playerId);
   }
 
-  renderOtherPlayers(playerID) {
-    let playersToRender = [];
-    for (let playerId of this.props.ctx.playOrder) {
-      //this.props.G.playerState[playerId];
-
-      if (playerId !== playerID) {
-        playersToRender.push(<Button>{this.props.G.playerState[playerId].character}</Button>);
-      }
-    }
-    return playersToRender;
-  }
-
-  renderCardsInHand(playerID) {
-    let cardsInHand = this.props.G.playerState[playerID].hand;
-    let cardsToRender = []
-    for (let card of cardsInHand) {
-      cardsToRender.push(
-        <Button onClick={() => this.playCard(card)}>
-          {card.title}
-        </Button>
-      )
-    }
-    return (<div>{cardsToRender}</div>)
-  }
-
   render() {
     if (this.props.ctx.phase === "dawn") {
       let characters = [];
@@ -58,67 +34,66 @@ export default class SalemBoard extends React.Component {
 
       if (isWitch) {
         if (this.props.playerID === this.props.ctx.currentPlayer) {
-          for (let playerId = 0; playerId < this.props.ctx.numPlayers; playerId++) {
-            let character = (< Button key={
-              playerId
-            }
-              onClick={
-                () => this.dawnClickPlayer(playerId)
-              } > {
-                this.props.G.playerState[playerId].character
-              } </Button>);
+          for (
+            let playerId = 0;
+            playerId < this.props.ctx.numPlayers;
+            playerId++
+          ) {
+            let characterName = this.props.G.playerState[playerId].character;
+            let character = (
+              <Character
+                key={characterName}
+                character={characterName}
+                onClick={() => this.dawnClickPlayer(playerId)}
+              />
+            );
             characters.push(character);
           }
 
-          return (<div> {
-            characters
-          } </div>)
+          return <div> {characters} </div>;
+        } else {
+          return <div> Your fellow witch is voting on the black cat... </div>;
         }
-        else {
-          return (<div> Your fellow witch is voting on the black cat... </div>)
-        }
-
+      } else {
+        return <div>Dawn is taking place...</div>;
       }
-      else {
-        return (<div>Dawn is taking place...</div>)
-      }
-
     }
 
     if (this.props.ctx.phase === "mainGame") {
       if (this.props.playerID === this.props.ctx.currentPlayer) {
-
-
         if (this.props.ctx.activePlayers) {
-          if (this.props.ctx.activePlayers[this.props.playerID] === "drawCards") {
-            return (<div><Button onClick={() => this.drawCard()}> Draw card</Button></div>)
+          let stage = this.props.ctx.activePlayers[this.props.playerID];
+          if (stage === "drawCards") {
+            return (
+              <div>
+                <Button onClick={() => this.drawCard()}> Draw card</Button>
+              </div>
+            );
+          } else if (stage === "playCards") {
+            return (
+              <PlayCard
+                G={this.props.G}
+                ctx={this.props.ctx}
+                playerID={this.props.playerID}
+                makeMove={(card, player) => {
+                  this.playCard(card, player);
+                }}
+              />
+            );
           }
-          else if (this.props.ctx.activePlayers[this.props.playerID] === "playCards") {
-            let cards = this.renderCardsInHand(this.props.playerID);
-            let players = this.renderOtherPlayers(this.props.playerID);
-
-            return (<div>{cards}{players}</div>)
-          }
-        }
-        else {
+        } else {
           return (
             <div>
-              <Button onClick={() => this.playCards()} > Play cards</Button>
-              <Button onClick={() => this.drawCards()} > Draw cards</Button>
+              <Button onClick={() => this.playCards()}> Play cards</Button>
+              <Button onClick={() => this.drawCards()}> Draw cards</Button>
             </div>
-            )
+          );
         }
-
-
-
+      } else {
+        return <div>{this.props.ctx.currentPlayer} is playing </div>;
       }
-      else {
-        return (<div>{this.props.ctx.currentPlayer} is playing </div>)
-      }
-    }
-
-    else {
-      return (<div>Normal phase</div>)
+    } else {
+      return <div>Normal phase</div>;
     }
   }
 }

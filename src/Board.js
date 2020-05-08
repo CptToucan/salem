@@ -1,4 +1,5 @@
 import React from 'react';
+import Button from '@material-ui/core/Button';
 
 export default class SalemBoard extends React.Component {
 
@@ -26,11 +27,11 @@ export default class SalemBoard extends React.Component {
 
   renderOtherPlayers(playerID) {
     let playersToRender = [];
-    for(let playerId of this.props.ctx.playOrder) {
+    for (let playerId of this.props.ctx.playOrder) {
       //this.props.G.playerState[playerId];
 
-      if(playerId !== playerID) {
-        playersToRender.push(<button>{this.props.G.playerState[playerId].character}</button>);
+      if (playerId !== playerID) {
+        playersToRender.push(<Button>{this.props.G.playerState[playerId].character}</Button>);
       }
     }
     return playersToRender;
@@ -39,11 +40,11 @@ export default class SalemBoard extends React.Component {
   renderCardsInHand(playerID) {
     let cardsInHand = this.props.G.playerState[playerID].hand;
     let cardsToRender = []
-    for(let card of cardsInHand) {
+    for (let card of cardsInHand) {
       cardsToRender.push(
-        <button onClick={() => this.playCard(card)}>
+        <Button onClick={() => this.playCard(card)}>
           {card.title}
-        </button>
+        </Button>
       )
     }
     return (<div>{cardsToRender}</div>)
@@ -58,14 +59,14 @@ export default class SalemBoard extends React.Component {
       if (isWitch) {
         if (this.props.playerID === this.props.ctx.currentPlayer) {
           for (let playerId = 0; playerId < this.props.ctx.numPlayers; playerId++) {
-            let character = (< button key={
+            let character = (< Button key={
               playerId
             }
               onClick={
                 () => this.dawnClickPlayer(playerId)
               } > {
                 this.props.G.playerState[playerId].character
-              } </button>);
+              } </Button>);
             characters.push(character);
           }
 
@@ -88,11 +89,11 @@ export default class SalemBoard extends React.Component {
       if (this.props.playerID === this.props.ctx.currentPlayer) {
 
 
-        if(this.props.ctx.activePlayers) {
-          if(this.props.ctx.activePlayers[this.props.playerID] === "drawCards") {
-            return (<div><button onClick={() => this.drawCard()}> Draw card</button></div>)
+        if (this.props.ctx.activePlayers) {
+          if (this.props.ctx.activePlayers[this.props.playerID] === "drawCards") {
+            return (<div><Button onClick={() => this.drawCard()}> Draw card</Button></div>)
           }
-          else if(this.props.ctx.activePlayers[this.props.playerID] === "playCards") {
+          else if (this.props.ctx.activePlayers[this.props.playerID] === "playCards") {
             let cards = this.renderCardsInHand(this.props.playerID);
             let players = this.renderOtherPlayers(this.props.playerID);
 
@@ -100,11 +101,16 @@ export default class SalemBoard extends React.Component {
           }
         }
         else {
-          return (<div><button onClick={() => this.playCards()} > Play cards</button> <button onClick={() => this.drawCards()} > Draw cards</button></div>)
+          return (
+            <div>
+              <Button onClick={() => this.playCards()} > Play cards</Button>
+              <Button onClick={() => this.drawCards()} > Draw cards</Button>
+            </div>
+            )
         }
 
 
-        
+
       }
       else {
         return (<div>{this.props.ctx.currentPlayer} is playing </div>)

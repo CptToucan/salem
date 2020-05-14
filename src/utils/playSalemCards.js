@@ -9,32 +9,137 @@ const RED_CARDS_VALUE = {
 
 export function playRed(G, ctx, cardToPlay, targetPlayer) {
   let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
-  targetPlayerState.appliedRedCards = update(targetPlayerState.appliedRedCards, {$push: [cardToPlay]})
+  let newRedAppliedCards = [...targetPlayerState.appliedRedCards];
+  newRedAppliedCards.push(cardToPlay);
+  targetPlayerState.appliedRedCards = newRedAppliedCards;
   return targetPlayerState;
 }
 
 export function playBlue(G, ctx, cardToPlay, targetPlayer) {
   let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
-  targetPlayerState.appliedBlueCards = update(targetPlayerState.appliedBlueCards, {$push: [cardToPlay]})
+  let newBlueAppliedCards = [...targetPlayerState.appliedBlueCards];
+  newBlueAppliedCards.push(cardToPlay);
+  targetPlayerState.appliedBlueCards = newBlueAppliedCards;
   return targetPlayerState;
 }
 
 export function playGreen(G, ctx, cardToPlay, targetPlayer) {
   let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
-  targetPlayerState.appliedGreenCards = update(targetPlayerState.appliedGreenCards, {$push: [cardToPlay]})
+  let newGreenAppliedCards = [...targetPlayerState.appliedGreenCards];
+  newGreenAppliedCards.push(cardToPlay);
+  targetPlayerState.appliedGreenCards = newGreenAppliedCards;
   return targetPlayerState;
+}
+
+export function getRedCardsAgainstPlayer(G, ctx, targetPlayer) {
+  let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
+  return targetPlayerState.appliedRedCards;
+}
+
+export function getBlueCardsAgainstPlayer(G, ctx, targetPlayer) {
+  let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
+  return targetPlayerState.appliedBlueCards;
+}
+
+export function getGreenCardsAgainstPlayer(G, ctx, targetPlayer) {
+  let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
+  return targetPlayerState.appliedGreenCards;
 }
 
 export function removeCardFromCurrentPlayer(G, ctx, cardToPlay) {
   let currentPlayerState = getCurrentPlayerState(G, ctx);
   let playersHand = currentPlayerState.hand;
-  let foundIndex;
-  for(let i = 0; i < playersHand.length; i++) {
-    if(cardToPlay === playersHand[i]) {
-      foundIndex = i;
+
+  let newHand = []
+  for(let card of playersHand) 
+  {
+    console.log(cardToPlay.id, card.id);
+    if(cardToPlay.id !== card.id) {
+      newHand.push(card);
     }
   }
 
-  let newHand = update(currentPlayerState.hand, {$splice: [[foundIndex, 1]]});
   currentPlayerState.hand = newHand;
+}
+
+export function playCardOnPlayer(G, ctx, cardToPlay, targetPlayer) {
+  let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
+  if(cardToPlay.colour === "RED") {
+    playRed(G, ctx, cardToPlay, targetPlayer);
+  }
+  else if(cardToPlay.colour === "BLUE") {
+    playBlue(G, ctx, cardToPlay, targetPlayer);
+  }
+  else if(cardToPlay.colour === "GREEN") {
+    playGreen(G, ctx, cardToPlay, targetPlayer);
+  }
+
+  
+
+  return targetPlayerState;
+}
+
+export function calculateAccusationsOnPlayer(G, ctx, targetPlayer) {
+  let redCards = getRedCardsAgainstPlayer(G, ctx, targetPlayer);
+
+  let totalAccusationValue = 0;
+  for(let card of redCards) {
+    totalAccusationValue += RED_CARDS_VALUE[card.type];
+  }
+
+  return totalAccusationValue;
+
+}
+
+export function hasCardAgainst(G, ctx, cardType, targetPlayer) {
+  for(let card of getRedCardsAgainstPlayer(G, ctx, targetPlayer)) {
+    if(card.type === cardType) {
+      return true;
+    }
+  }
+
+  for(let card of getBlueCardsAgainstPlayer(G, ctx, targetPlayer)) {
+    if(card.type === cardType) {
+      return true;
+    }
+  }
+
+  for(let card of getGreenCardsAgainstPlayer(G, ctx, targetPlayer)) {
+    if(card.type === cardType) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function removeCardTypeFromPlayer(G, ctx, cardType, targetPlayer) {
+  let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
+
+  let newRedAppliedCards = [];
+  for(let card of getRedCardsAgainstPlayer(G, ctx, targetPlayer)) {
+    if(card.type !== cardType) {
+      newRedAppliedCards.push(card);
+    }
+  }
+
+  let newBlueAppliedCards = [];
+  for(let card of getBlueCardsAgainstPlayer(G, ctx, targetPlayer)) {
+    if(card.type !== cardType) {
+      newBlueAppliedCards.push(card);
+    }
+  }
+
+  let newGreenAppliedCards = [];
+  for(let card of getGreenCardsAgainstPlayer(G, ctx, targetPlayer)) {
+    if(card.type !== cardType) {
+      newGreenAppliedCards.push(card);
+    }
+  }
+
+  targetPlayerState.appliedRedCards = newRedAppliedCards;
+  targetPlayerState.appliedBlueCards = newBlueAppliedCards;
+  targetPlayerState.appliedGreenCards = newGreenAppliedCards;
+
+  return targetPlayerState;
 }

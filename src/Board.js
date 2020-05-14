@@ -2,6 +2,13 @@ import React from "react";
 import Button from "@material-ui/core/Button";
 import Character from "./components/Character";
 import PlayCard from "./components/PlayCard";
+import {
+  removeCardFromCurrentPlayer,
+  playCardOnPlayer,
+  calculateAccusationsOnPlayer,
+  hasCardAgainst,
+} from "./utils/playSalemCards";
+import { getCurrentPlayerState, getPlayerStat } from "./utils/getPlayerState";
 
 export default class SalemBoard extends React.Component {
   dawnClickPlayer(playerId) {
@@ -61,7 +68,23 @@ export default class SalemBoard extends React.Component {
 
     if (this.props.ctx.phase === "mainGame") {
       if (this.props.playerID === this.props.ctx.currentPlayer) {
-        if (this.props.ctx.activePlayers) {
+        if (
+          hasCardAgainst(
+            this.props.G,
+            this.props.ctx,
+            "STOCKS",
+            this.props.ctx.currentPlayer
+          )
+        ) {
+          return (
+            <div>
+              <Button onClick={() => this.props.events.endTurn()}>
+                End Turn
+              </Button>
+            </div>
+          );
+        }
+        else if (this.props.ctx.activePlayers) {
           let stage = this.props.ctx.activePlayers[this.props.playerID];
           if (stage === "drawCards") {
             return (
@@ -71,14 +94,19 @@ export default class SalemBoard extends React.Component {
             );
           } else if (stage === "playCards") {
             return (
-              <PlayCard
-                G={this.props.G}
-                ctx={this.props.ctx}
-                playerID={this.props.playerID}
-                makeMove={(card, player) => {
-                  this.playCard(card, player);
-                }}
-              />
+              <div>
+                <PlayCard
+                  G={this.props.G}
+                  ctx={this.props.ctx}
+                  playerID={this.props.playerID}
+                  makeMove={(card, player) => {
+                    this.playCard(card, player);
+                  }}
+                />
+                <Button onClick={() => this.props.events.endTurn()}>
+                  End Turn
+                </Button>
+              </div>
             );
           }
         } else {

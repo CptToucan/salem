@@ -10,8 +10,8 @@ import {
 import { Local } from 'boardgame.io/multiplayer';
 import { TurnOrder } from 'boardgame.io/core';
 import update from 'immutability-helper';
-import { removeCardFromCurrentPlayer, playRed, playBlue, playGreen } from './utils/playSalemCards';
-import { getCurrentPlayerState, getPlayerState } from './utils/getPlayerState';
+import { removeCardFromCurrentPlayer, playCardOnPlayer, calculateAccusationsOnPlayer, hasCardAgainst, removeCardTypeFromPlayer } from './utils/playSalemCards';
+import { getCurrentPlayerState, getPlayerStat } from './utils/getPlayerState';
 
 
 
@@ -34,6 +34,7 @@ function generateSalemCardType(title, numberOfCards = 0) {
   return cards;
 }
 
+const ACCUSATIONS_NEEDED_FOR_TRYAL = 7;
 
 const CARDS_DEF = {
   "Accusation_RED": 35, //red
@@ -260,7 +261,7 @@ const Salem = {
           playerToAssignBlackCat = playersWithVotes[0];
         }
         let blackCatCard = generateSalemCardType("Blackcat_BLUE", 1);
-        G.playerState[playerToAssignBlackCat].appliedStatusCards.push(blackCatCard);
+        playCardOnPlayer(G, ctx, blackCatCard, playerToAssignBlackCat);
 
       },
       onBegin: (G, ctx) => {
@@ -306,14 +307,21 @@ const Salem = {
       turn: {
         order: TurnOrder.RESET,
         onBegin: (G, ctx) => {
-          G.drawnCardsThisTurn = 0
+          G.drawnCardsThisTurn = 0;
+
           return G;
         },
 
         endIf: (G, ctx) => {
+  
+  
+
           if(G.drawnCardsThisTurn === 2) {
             return true;
           }
+        },
+        onEnd: (G, ctx) => {
+          removeCardTypeFromPlayer(G, ctx, "STOCKS", ctx.currentPlayer);
         },
         stages: {
           drawCards: {
@@ -328,16 +336,20 @@ const Salem = {
             moves: {
               playCard(G, ctx, cardToPlay, targetPlayer) {
                 removeCardFromCurrentPlayer(G, ctx, cardToPlay);
+                playCardOnPlayer(G, ctx, cardToPlay, targetPlayer);
+                let totalAccusations = calculateAccusationsOnPlayer(G, ctx, targetPlayer);
+                console.log(totalAccusations);
 
-                if(cardToPlay.colour === "RED") {
-                  playRed(G, ctx, cardToPlay, targetPlayer)
+                if(totalAccusations >= ACCUSATIONS_NEEDED_FOR_TRYAL) {
+                  console.log("TRYAL STARTED");
                 }
-                else if(cardToPlay.colour === "GREEN") {
-                  playGreen(G, ctx, cardToPlay, targetPlayer)
-                }
-                else if(cardToPlay.colour === "BLUE") {
-                  playBlue(G, ctx, cardToPlay, targetPlayer)
-                }
+              }
+            }
+          },
+          tryal: {
+            moves: {
+              selectTryalCard(G, ctx, selectedTryalCard, targetPlayer) {
+                
               }
             }
           }

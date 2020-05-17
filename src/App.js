@@ -62,7 +62,7 @@ const CARDS_DEF = {
   "Witness_RED": 1, // red
   "Stocks_GREEN": 3, // green
   "Alibi_GREEN": 3,// green
-  "Scapegoat_GREEN": 30,//2, // green
+  "Scapegoat_GREEN": 2, // green
   "Arson_GREEN": 1, // green
   "Robbery_GREEN": 1, // green
   "Curse_GREEN": 1, // blue 
@@ -162,7 +162,7 @@ function initializePlayers(numPlayers) {
 }
 
 function drawCardFromDeck(G, ctx) {
-  let cardToAssign = G.salemDeck.shift();
+  let cardToAssign = G.salemDeck.pop();
   let playerState = G.playerState;
   playerState[ctx.currentPlayer].hand.push(cardToAssign);
 }
@@ -230,7 +230,8 @@ const Salem = {
     salemDeck = ctx.random.Shuffle(salemDeck);
 
     //Add night to bottom
-    salemDeck = salemDeck.concat(nightCard);
+    //salemDeck = nightCard.concat(salemDeck) salemDeck.concat(nightCard);
+    salemDeck.push(...nightCard);
 
     return {
       playerState,
@@ -329,6 +330,7 @@ const Salem = {
     },
     mainGame: {
       turn: {
+
         order: TurnOrder.RESET,
         onBegin: (G, ctx) => {
           G.drawnCardsThisTurn = 0;
@@ -337,15 +339,49 @@ const Salem = {
         },
 
         endIf: (G, ctx) => {
-
-
-
           if (G.drawnCardsThisTurn === 2) {
             return true;
           }
         },
         onEnd: (G, ctx) => {
           removeCardTypeFromPlayer(G, ctx, "STOCKS", ctx.currentPlayer);
+        },
+
+        onMove: (G, ctx) => {
+          let currentPlayerState = getCurrentPlayerState(G, ctx);
+          let hand = currentPlayerState.hand;
+          
+          for(let card of hand) {
+            if(card.type === "CONSPIRACY") {
+              let playersToTakeToConspiracy = {};
+              for(let player of G.alivePlayers) {
+                playersToTakeToConspiracy[player] = "conspiracy";
+              }
+
+              ctx.events.setActivePlayers({
+                value: playersToTakeToConspiracy
+              });
+
+              G.isConspiracy = true;
+            }
+            else if(card.type === "NIGHT") {
+              let playersToTakeToNight = {};
+              for(let player of G.alivePlayers) {
+                let playerState = getPlayerState(G, ctx, player);
+
+                if(playerState.isWitch || playerState.isConstable) {
+                  playersToTakeToNight[player] = "night";
+                }
+                
+              }
+
+              ctx.events.setActivePlayers({
+                value: playersToTakeToNight
+              });
+
+              G.isNight = true;
+            }
+          }
         },
         stages: {
           drawCards: {
@@ -382,6 +418,17 @@ const Salem = {
                 removeCardColourFromPlayer(G, ctx, "RED", targetPlayer);
                 ctx.events.setStage("playCards");
               }
+            }
+          },
+          
+          conspiracy: {
+            moves: {
+
+            }
+          },
+          night: {
+            moves: {
+
             }
           }
         }

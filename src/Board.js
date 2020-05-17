@@ -3,6 +3,8 @@ import Button from "@material-ui/core/Button";
 import Character from "./components/Character";
 import PlayCard from "./components/PlayCard";
 import Tryal from "./components/Tryal";
+import Night from "./components/Night";
+import Conspiracy from "./components/Conspiracy";
 
   
 /*
@@ -148,6 +150,17 @@ export default class SalemBoard extends React.Component {
               />
             )
           }
+          
+        else if(stage === "night") {
+          return (<div>
+            <Night G={this.props.G} ctx={this.props.ctx} playerID={this.props.playerID} />
+          </div>)
+        }
+        else if(stage === "conspiracy") {
+          return (<div>
+            <Conspiracy G={this.props.G} ctx={this.props.ctx} playerID={this.props.playerID}/>
+          </div>)
+        }
         } else {
           return (
             <div>

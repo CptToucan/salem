@@ -72,6 +72,16 @@ export default class SalemCard extends React.Component {
         title: "WITNESS",
         colour: "RED",
         description: "Worth 7 accusations"
+      },
+      CONSPIRACY: {
+        title: "CONSPIRACY",
+        colour: "BLACK",
+        description: "Play immediately"
+      },
+      NIGHT: {
+        title: "NIGHT",
+        colour: "BLACK",
+        description: "Play immediately"
       }
     }
 

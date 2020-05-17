@@ -7,11 +7,31 @@ import {
   Client
 } from 'boardgame.io/react';
 
-import { Local } from 'boardgame.io/multiplayer';
-import { TurnOrder } from 'boardgame.io/core';
+import {
+  Local
+} from 'boardgame.io/multiplayer';
+import {
+  TurnOrder
+} from 'boardgame.io/core';
 import update from 'immutability-helper';
-import { removeCardFromCurrentPlayer, playCardOnPlayer, calculateAccusationsOnPlayer, hasCardAgainst, removeCardTypeFromPlayer } from './utils/playSalemCards';
-import { getCurrentPlayerState, getPlayerStat } from './utils/getPlayerState';
+import {
+  removeCardFromCurrentPlayer,
+  playCardOnPlayer,
+  calculateAccusationsOnPlayer,
+  hasCardAgainst,
+  removeCardColourFromPlayer,
+  removeCardTypeFromPlayer
+} from './utils/salem';
+import {
+  getCurrentPlayerState,
+  getPlayerState,
+  isWitchRevealed,
+  allTryalCardsRevealed,
+  killPlayer
+} from './utils/player';
+import {
+  revealTryalCard
+} from './utils/tryal';
 
 
 
@@ -42,7 +62,7 @@ const CARDS_DEF = {
   "Witness_RED": 1, // red
   "Stocks_GREEN": 3, // green
   "Alibi_GREEN": 3, // green
-  "Scapegoat_GREEN": 2, // green
+  "Scapegoat_GREEN": 40,//2, // green
   "Arson_GREEN": 1, // green
   "Robbery_GREEN": 1, // green
   "Curse_BLUE": 1, // blue 
@@ -50,7 +70,6 @@ const CARDS_DEF = {
   "Asylum_BLUE": 1, // blue
   "Piety_BLUE": 1 // blue
 }
-
 
 
 
@@ -124,13 +143,15 @@ const CHARACTERS = [
 
 function initializePlayers(numPlayers) {
   let defaultPlayers = {}
-  for(let playerId = 0; playerId < numPlayers; playerId++) {
+  for (let playerId = 0; playerId < numPlayers; playerId++) {
     defaultPlayers[playerId] = {
       isWitch: false,
       isConstable: false,
       character: "",
       hand: [],
       tryalCards: [],
+      revealedTryalCards: [],
+      tryalCardCount: 0,
       appliedBlueCards: [],
       appliedRedCards: [],
       appliedGreenCards: [],
@@ -157,7 +178,7 @@ const Salem = {
 
     let witchCardDeck = [];
 
-    for(let card in setupState) {
+    for (let card in setupState) {
       witchCardDeck = witchCardDeck.concat(generateSalemCardType(card, setupState[card]))
     }
 
@@ -168,31 +189,33 @@ const Salem = {
     let playerState = initializePlayers(ctx.numPlayers);
 
     // Assign characters
-    for(let player of ctx.playOrder) {
+    let alivePlayers = [...ctx.playOrder];
+    for (let player of alivePlayers) {
 
       playerState[player].character = characterDeck.pop();
     }
 
 
     // Assign witch cards
-    while(witchDeck.length > 0) {
-      for(let player of ctx.playOrder) {
+    while (witchDeck.length > 0) {
+      for (let player of alivePlayers) {
         let cardToAdd = witchDeck.pop();
 
-        if(cardToAdd.type === "WITCH") {
+        if (cardToAdd.type === "WITCH") {
           playerState[player].isWitch = true;
         }
 
-        if(cardToAdd.type === "CONSTABLE") {
+        if (cardToAdd.type === "CONSTABLE") {
           playerState[player].isConstable = true;
         }
 
-        playerState[player].tryalCards.push(cardToAdd);    
+        playerState[player].tryalCards.push(cardToAdd);
+        playerState[player].tryalCardCount++;
       }
     }
 
     // Assign hand
-    for(let player of ctx.playOrder) {
+    for (let player of alivePlayers) {
       playerState[player].hand.push(salemDeck.pop());
       playerState[player].hand.push(salemDeck.pop());
       playerState[player].hand.push(salemDeck.pop());
@@ -212,7 +235,8 @@ const Salem = {
     return {
       playerState,
       salemDeck,
-      salemDiscard: []
+      salemDiscard: [],
+      alivePlayers
     };
   },
   moves: {
@@ -225,21 +249,21 @@ const Salem = {
     dawn: {
       endIf: (G, ctx) => {
         let totalVotes = 0;
-        for(let playerId in G.dawnVotes) {
+        for (let playerId in G.dawnVotes) {
           totalVotes += G.dawnVotes[playerId]
         }
 
         let numWitches = 0;
 
-        for(let playerId in G.playerState) {
-          if(G.playerState[playerId].isWitch === true) {
+        for (let playerId in G.playerState) {
+          if (G.playerState[playerId].isWitch === true) {
             numWitches++;
-          } 
+          }
         }
 
-        
 
-        if(totalVotes === numWitches) {
+
+        if (totalVotes === numWitches) {
           return true
         }
 
@@ -248,16 +272,15 @@ const Salem = {
       },
       onEnd: (G, ctx) => {
         let playersWithVotes = [];
-        for(let playerId in G.dawnVotes) {
+        for (let playerId in G.dawnVotes) {
           playersWithVotes.push(playerId);
         }
 
         let playerToAssignBlackCat;
 
-        if(playersWithVotes.length > 1) {
+        if (playersWithVotes.length > 1) {
           playerToAssignBlackCat = playersWithVotes[ctx.random.Die(playersWithVotes.length) - 1];
-        }
-        else {
+        } else {
           playerToAssignBlackCat = playersWithVotes[0];
         }
         let blackCatCard = generateSalemCardType("Blackcat_BLUE", 1);
@@ -269,13 +292,12 @@ const Salem = {
       },
       moves: {
         voteBlackCat(G, ctx, playerId) {
-          if(G.dawnVotes[playerId] === undefined) {
+          if (G.dawnVotes[playerId] === undefined) {
             G.dawnVotes[playerId] = 1;
+          } else {
+            G.dawnVotes[playerId]++;
           }
-          else {
-            G.dawnVotes[playerId]++; 
-          }
-        
+
         }
       },
       start: true,
@@ -284,15 +306,17 @@ const Salem = {
       turn: {
         order: {
 
-          first: (G, ctx) => {return 0},
+          first: (G, ctx) => {
+            return 0
+          },
           next: (G, ctx) => {
-           return ctx.playOrderPos + 1
+            return ctx.playOrderPos + 1
           },
 
           playOrder: (G, ctx) => {
             let witches = [];
-            for(let playerId = 0; playerId < ctx.numPlayers; playerId++) {
-              if(G.playerState[playerId].isWitch) {
+            for (let playerId = 0; playerId < ctx.numPlayers; playerId++) {
+              if (G.playerState[playerId].isWitch) {
                 witches.push(playerId);
               }
             }
@@ -301,7 +325,7 @@ const Salem = {
         }
       }
 
-      
+
     },
     mainGame: {
       turn: {
@@ -313,10 +337,10 @@ const Salem = {
         },
 
         endIf: (G, ctx) => {
-  
-  
 
-          if(G.drawnCardsThisTurn === 2) {
+
+
+          if (G.drawnCardsThisTurn === 2) {
             return true;
           }
         },
@@ -334,22 +358,30 @@ const Salem = {
           },
           playCards: {
             moves: {
-              playCard(G, ctx, cardToPlay, targetPlayer) {
+              playCard(G, ctx, cardToPlay, player, targetPlayer) {
                 removeCardFromCurrentPlayer(G, ctx, cardToPlay);
-                playCardOnPlayer(G, ctx, cardToPlay, targetPlayer);
-                let totalAccusations = calculateAccusationsOnPlayer(G, ctx, targetPlayer);
-                console.log(totalAccusations);
+                playCardOnPlayer(G, ctx, cardToPlay, player);
 
-                if(totalAccusations >= ACCUSATIONS_NEEDED_FOR_TRYAL) {
-                  console.log("TRYAL STARTED");
+
+                let totalAccusations = calculateAccusationsOnPlayer(G, ctx, player);
+                if (totalAccusations >= ACCUSATIONS_NEEDED_FOR_TRYAL) {
+                  ctx.events.setStage("tryal")
                 }
               }
             }
           },
           tryal: {
             moves: {
-              selectTryalCard(G, ctx, selectedTryalCard, targetPlayer) {
+              selectTryalCard(G, ctx, tryalCardIndex, targetPlayer) {
+                revealTryalCard(G, ctx, tryalCardIndex, targetPlayer);
+
                 
+                if (isWitchRevealed(G, ctx, targetPlayer) || allTryalCardsRevealed(G, ctx, targetPlayer)) {
+                  killPlayer(G, ctx, targetPlayer);
+                }
+                
+                removeCardColourFromPlayer(G, ctx, "RED", targetPlayer);
+                ctx.events.setStage("playCards");
               }
             }
           }
@@ -371,17 +403,24 @@ const SalemClient = Client({
   multiplayer: Local()
 });
 
-const App = () => (
-  <div>
-  <SalemClient playerID="0" />
-  <SalemClient playerID="1" />
-  <SalemClient playerID="2" />
-  <SalemClient playerID="3" />
-  <SalemClient playerID="4" />
-  <SalemClient playerID="5" />
-  <SalemClient playerID="6" />
-  <SalemClient playerID="7" />
-</div>
+const App = () => ( <div>
+  <
+  SalemClient playerID = "0" / >
+  <
+  SalemClient playerID = "1" / >
+  <
+  SalemClient playerID = "2" / >
+  <
+  SalemClient playerID = "3" / >
+  <
+  SalemClient playerID = "4" / >
+  <
+  SalemClient playerID = "5" / >
+  <
+  SalemClient playerID = "6" / >
+  <
+  SalemClient playerID = "7" / >
+  </div>
 )
 
 
@@ -389,27 +428,3 @@ const App = () => (
 
 
 export default App;
-/*
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
-*/
-
-//export default App;

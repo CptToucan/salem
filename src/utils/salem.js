@@ -1,4 +1,4 @@
-import { getCurrentPlayerState, getPlayerState } from "./getPlayerState";
+import { getCurrentPlayerState, getPlayerState } from "./player";
 import update from 'immutability-helper';
 
 const RED_CARDS_VALUE = {
@@ -23,12 +23,31 @@ export function playBlue(G, ctx, cardToPlay, targetPlayer) {
   return targetPlayerState;
 }
 
-export function playGreen(G, ctx, cardToPlay, targetPlayer) {
-  let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
-  let newGreenAppliedCards = [...targetPlayerState.appliedGreenCards];
-  newGreenAppliedCards.push(cardToPlay);
-  targetPlayerState.appliedGreenCards = newGreenAppliedCards;
-  return targetPlayerState;
+export function playGreen(G, ctx, cardToPlay, player, targetPlayer) {
+  let playerState = getPlayerState(G, ctx, player);
+  let newGreenAppliedCards = [...playerState.appliedGreenCards];
+
+  if(cardToPlay.type === "STOCKS") {
+    newGreenAppliedCards.push(cardToPlay);
+    playerState.appliedGreenCards = newGreenAppliedCards;
+  }
+  else if(cardToPlay.type === "ARSON") {
+    discardPlayersHand(G, ctx, player);
+  }
+  else if(cardToPlay.type === "ALIBI") {
+
+  }
+  else if(cardToPlay.type === "SCAPEGOAT") {
+    
+  }
+  else if(cardToPlay.type === "ROBBERY") {
+
+  }
+  else if(cardToPlay.type === "CURSE") {
+
+  }
+
+  return playerState;
 }
 
 export function getRedCardsAgainstPlayer(G, ctx, targetPlayer) {
@@ -53,7 +72,6 @@ export function removeCardFromCurrentPlayer(G, ctx, cardToPlay) {
   let newHand = []
   for(let card of playersHand) 
   {
-    console.log(cardToPlay.id, card.id);
     if(cardToPlay.id !== card.id) {
       newHand.push(card);
     }
@@ -62,21 +80,19 @@ export function removeCardFromCurrentPlayer(G, ctx, cardToPlay) {
   currentPlayerState.hand = newHand;
 }
 
-export function playCardOnPlayer(G, ctx, cardToPlay, targetPlayer) {
-  let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
+export function playCardOnPlayer(G, ctx, cardToPlay, player, targetPlayer) {
+  let playerState = getPlayerState(G, ctx, player,);
   if(cardToPlay.colour === "RED") {
-    playRed(G, ctx, cardToPlay, targetPlayer);
+    playRed(G, ctx, cardToPlay, player);
   }
   else if(cardToPlay.colour === "BLUE") {
-    playBlue(G, ctx, cardToPlay, targetPlayer);
+    playBlue(G, ctx, cardToPlay, player);
   }
   else if(cardToPlay.colour === "GREEN") {
-    playGreen(G, ctx, cardToPlay, targetPlayer);
+    playGreen(G, ctx, cardToPlay, player, targetPlayer);
   }
 
-  
-
-  return targetPlayerState;
+  return playerState;
 }
 
 export function calculateAccusationsOnPlayer(G, ctx, targetPlayer) {
@@ -142,4 +158,30 @@ export function removeCardTypeFromPlayer(G, ctx, cardType, targetPlayer) {
   targetPlayerState.appliedGreenCards = newGreenAppliedCards;
 
   return targetPlayerState;
+}
+
+export function removeCardColourFromPlayer(G, ctx, cardColour, targetPlayer) {
+  let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
+
+  let newAppliedCards = [];
+
+  if(cardColour === "RED") {
+    targetPlayerState.appliedRedCards = newAppliedCards;
+  }
+  else if(cardColour === "BLUE") {
+    targetPlayerState.appliedBlueCards = newAppliedCards;
+  }
+  else if(cardColour === "GREEN") {
+    targetPlayerState.appliedGreenCards = newAppliedCards;
+  }
+
+  return targetPlayerState;
+}
+
+export function discardPlayersHand(G, ctx, targetPlayer) {
+  let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
+  let handToDiscard = [...targetPlayerState.hand];
+  let newDiscard = [...G.salemDiscard];
+  newDiscard.push(...handToDiscard);
+  targetPlayerState.hand = [];
 }

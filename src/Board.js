@@ -2,13 +2,36 @@ import React from "react";
 import Button from "@material-ui/core/Button";
 import Character from "./components/Character";
 import PlayCard from "./components/PlayCard";
+import Tryal from "./components/Tryal";
+
+  
+/*
+import PlayAsylum from './blue/PlayAsylum';
+import PlayBlackCat from './blue/PlayBlackCat';
+import PlayMatchmaker from './blue/PlayMatchmaker';
+import PlayPiety from './blue/PlayPiety';
+
+import PlayAlibi from './green/PlayAlibi';
+import PlayArson from './green/PlayArson';
+import PlayCurse from './green/PlayCurse';
+import PlayRobbery from './green/PlayRobbery';
+import PlayScapegoat from './green/PlayScapegoat';
+import PlayStocks from './green/PlayStocks';
+
+import PlayAccusation from './red/PlayAccusation';
+import PlayEvidence from './red/PlayEvidence';
+import PlayWitness from './red/PlayWitness';
+*/
+
 import {
   removeCardFromCurrentPlayer,
   playCardOnPlayer,
   calculateAccusationsOnPlayer,
   hasCardAgainst,
-} from "./utils/playSalemCards";
-import { getCurrentPlayerState, getPlayerStat } from "./utils/getPlayerState";
+} from "./utils/salem";
+import { getCurrentPlayerState, getPlayerState } from "./utils/player";
+
+
 
 export default class SalemBoard extends React.Component {
   dawnClickPlayer(playerId) {
@@ -25,12 +48,15 @@ export default class SalemBoard extends React.Component {
   }
 
   drawCard() {
-    console.log(this.props.G);
     this.props.moves.drawCard();
   }
 
-  playCard(card, playerId) {
-    this.props.moves.playCard(card, playerId);
+  playCard(card, playerId, targetPlayerId, selectedCards) {
+    this.props.moves.playCard(card, playerId, targetPlayerId, selectedCards);
+  }
+
+  revealTryalCard(cardIndex, player) {
+    this.props.moves.selectTryalCard(cardIndex, player);
   }
 
   render() {
@@ -92,15 +118,16 @@ export default class SalemBoard extends React.Component {
                 <Button onClick={() => this.drawCard()}> Draw card</Button>
               </div>
             );
-          } else if (stage === "playCards") {
+          } 
+          else if (stage === "playCards") {
             return (
               <div>
                 <PlayCard
                   G={this.props.G}
                   ctx={this.props.ctx}
                   playerID={this.props.playerID}
-                  makeMove={(card, player) => {
-                    this.playCard(card, player);
+                  makeMove={(card, player, targetPlayer, selectedCards) => {
+                    this.playCard(card, player, targetPlayer, selectedCards);
                   }}
                 />
                 <Button onClick={() => this.props.events.endTurn()}>
@@ -108,6 +135,18 @@ export default class SalemBoard extends React.Component {
                 </Button>
               </div>
             );
+          }
+          else if (stage === "tryal") {
+            return (
+              <Tryal
+              G={this.props.G}
+              ctx={this.props.ctx}
+              playerID={this.props.playerID}
+              selectTryalCard={(cardIndex, player) => {
+                this.revealTryalCard(cardIndex, player)
+              }}
+              />
+            )
           }
         } else {
           return (

@@ -61,8 +61,8 @@ const CARDS_DEF = {
   "Evidence_RED": 5, // red
   "Witness_RED": 1, // red
   "Stocks_GREEN": 3, // green
-  "Alibi_GREEN": 30,//3,//30, // green
-  "Scapegoat_GREEN": 2, // green
+  "Alibi_GREEN": 3,// green
+  "Scapegoat_GREEN": 30,//2, // green
   "Arson_GREEN": 1, // green
   "Robbery_GREEN": 1, // green
   "Curse_GREEN": 1, // blue 

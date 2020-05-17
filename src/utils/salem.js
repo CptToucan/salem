@@ -43,9 +43,31 @@ export function playGreen(G, ctx, cardToPlay, player, targetPlayer, selectedTarg
     addCardToDiscardPile(G, ctx, cardToPlay);
   }
   else if(cardToPlay.type === "SCAPEGOAT") {
+    let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
+
+    let newTargetAppliedBlueCards = [...targetPlayerState.appliedBlueCards, ...playerState.appliedBlueCards];
+    let newTargetAppliedRedCards = [...targetPlayerState.appliedRedCards, ...playerState.appliedRedCards];
+    let newTargetAppliedGreenCards = [...targetPlayerState.appliedGreenCards, ...playerState.appliedGreenCards];
+
+
+    playerState.appliedBlueCards = [];
+    playerState.appliedRedCards = [];
+    playerState.appliedGreenCards = [];
+
+    targetPlayerState.appliedBlueCards = newTargetAppliedBlueCards;
+    targetPlayerState.appliedRedCards = newTargetAppliedRedCards;
+    targetPlayerState.appliedGreenCards = newTargetAppliedGreenCards;
+
+
     addCardToDiscardPile(G, ctx, cardToPlay);
   }
   else if(cardToPlay.type === "ROBBERY") {
+    let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
+    let newTargetPlayerHand = [...targetPlayerState.hand, ...playerState.hand];
+    let newSourcePlayerHand = [];
+
+    playerState.hand = newSourcePlayerHand;
+    targetPlayerState.hand = newTargetPlayerHand;
     addCardToDiscardPile(G, ctx, cardToPlay);
   }
   else if(cardToPlay.type === "CURSE") {
@@ -62,16 +84,6 @@ export function addCardToDiscardPile(G, ctx, card) {
   newDiscardPile.push(card);
   G.salemDiscard = newDiscardPile;
 }
-
-/**
-export function discardPlayersHand(G, ctx, targetPlayer) {
-  let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
-  let handToDiscard = [...targetPlayerState.hand];
-  let newDiscard = [...G.salemDiscard];
-  newDiscard.push(...handToDiscard);
-  targetPlayerState.hand = [];
-}
-**/
 
 export function getRedCardsAgainstPlayer(G, ctx, targetPlayer) {
   let targetPlayerState = getPlayerState(G, ctx, targetPlayer);

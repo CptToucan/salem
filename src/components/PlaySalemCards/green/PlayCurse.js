@@ -84,7 +84,6 @@ export default class PlayCurse extends React.Component {
     let selectedPlayer = this.state.selectedPlayer;
     let selectedTargetPlayer = this.state.selectedTargetPlayer;
     let selectedTargetCards = this.state.selectedTargetCards;
-    console.log(selectedTargetCards);
     if(selectedPlayer === null) {
       return this.renderOtherPlayersWithBlueStatusCard(this.props.playerID);
     }

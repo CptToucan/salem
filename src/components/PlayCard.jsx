@@ -3,6 +3,8 @@ import Button from "@material-ui/core/Button";
 import Character from "./Character";
 import { getPlayerState } from "../utils/player";
 
+import SalemCard from "./SalemCard";
+
 import PlayAsylum from "./PlaySalemCards/blue/PlayAsylum";
 import PlayBlackCat from "./PlaySalemCards/blue/PlayBlackCat";
 import PlayMatchmaker from "./PlaySalemCards/blue/PlayMatchmaker";
@@ -18,15 +20,6 @@ import PlayStocks from "./PlaySalemCards/green/PlayStocks";
 import PlayAccusation from "./PlaySalemCards/red/PlayAccusation";
 import PlayEvidence from "./PlaySalemCards/red/PlayEvidence";
 import PlayWitness from "./PlaySalemCards/red/PlayWitness";
-
-function humanize(str) {
-  return str
-    .replace(/^[\s_]+|[\s_]+$/g, "")
-    .replace(/[_\s]+/g, " ")
-    .replace(/^[a-z]/, function (m) {
-      return m.toUpperCase();
-    });
-}
 
 export default class PlayCard extends React.Component {
   constructor(props) {
@@ -67,33 +60,20 @@ export default class PlayCard extends React.Component {
     let cardsInHand = this.props.G.playerState[playerID].hand;
     let cardsToRender = [];
     for (let card of cardsInHand) {
+      /*
       cardsToRender.push(
         <Button onClick={() => this.selectCard(card)}>{card.title}</Button>
       );
+      */
+     cardsToRender.push(
+       <SalemCard cardClicked={(cardClicked) => {this.selectCard(cardClicked)}} card={card}/>
+     )
     }
     return <div>{cardsToRender}</div>;
   }
 
   findPlayCardComponentForType(cardType) {
-    /*
-    let componentMap = {
-      "ASYLUM": "PlayAsylum",
-      "BLACKCAT": "PlayBlackCat",
-      "MATCHMAKER": "PlayMatchmaker",
-      "PIETY": "PlayPiety",
-      "ALIBI": "PlayAlibi",
-      "ARSON": "PlayArson",
-      "CURSE": "PlayCurse",
-      "ROBBERY": "PlayRobbery",
-      "SCAPEGOAT": "PlayScapegoat",
-      "STOCKS": "PlayStocks",
-      "ACCUSATION": "PlayAccusation",
-      "EVIDENCE": "PlayEvidence",
-      "WITNESS": "PlayWitness"
-    }
-    */
-
-    let componentMap = {
+    const componentMap = {
       ASYLUM: PlayAsylum,
       BLACKCAT: PlayBlackCat,
       MATCHMAKER: PlayMatchmaker,
@@ -139,22 +119,6 @@ export default class PlayCard extends React.Component {
           }}
         />
       );
-      /*
-      return React.createElement(ComponentName, {
-        selectedCardOptions: (
-          selectedPlayer,
-          selectedTargetPlayer,
-          selectedTargetCards
-        ) => {
-          this.confirmMove(
-            selectedCard,
-            selectedPlayer,
-            selectedTargetPlayer,
-            selectedTargetCards
-          );
-        },
-      });
-      */
     }
 
     /*

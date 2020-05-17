@@ -61,11 +61,11 @@ const CARDS_DEF = {
   "Evidence_RED": 5, // red
   "Witness_RED": 1, // red
   "Stocks_GREEN": 3, // green
-  "Alibi_GREEN": 3, // green
-  "Scapegoat_GREEN": 40,//2, // green
+  "Alibi_GREEN": 30,//3,//30, // green
+  "Scapegoat_GREEN": 2, // green
   "Arson_GREEN": 1, // green
   "Robbery_GREEN": 1, // green
-  "Curse_BLUE": 1, // blue 
+  "Curse_GREEN": 1, // blue 
   "Matchmaker_BLUE": 2, // blue
   "Asylum_BLUE": 1, // blue
   "Piety_BLUE": 1 // blue
@@ -358,10 +358,9 @@ const Salem = {
           },
           playCards: {
             moves: {
-              playCard(G, ctx, cardToPlay, player, targetPlayer) {
+              playCard(G, ctx, cardToPlay, player, targetPlayer, selectedTargetCards) {
                 removeCardFromCurrentPlayer(G, ctx, cardToPlay);
-                playCardOnPlayer(G, ctx, cardToPlay, player);
-
+                playCardOnPlayer(G, ctx, cardToPlay, player, targetPlayer, selectedTargetCards);
 
                 let totalAccusations = calculateAccusationsOnPlayer(G, ctx, player);
                 if (totalAccusations >= ACCUSATIONS_NEEDED_FOR_TRYAL) {

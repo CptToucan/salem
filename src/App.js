@@ -1,40 +1,29 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.scss';
-import Board from './Board';
+import React from "react";
+import logo from "./logo.svg";
+import "./App.scss";
+import Board from "./Board";
 
-import {
-  Client
-} from 'boardgame.io/react';
+import { Client } from "boardgame.io/react";
 
-import {
-  Local
-} from 'boardgame.io/multiplayer';
-import {
-  TurnOrder
-} from 'boardgame.io/core';
-import update from 'immutability-helper';
+import { Local } from "boardgame.io/multiplayer";
+import { TurnOrder } from "boardgame.io/core";
+import update from "immutability-helper";
 import {
   removeCardFromCurrentPlayer,
   playCardOnPlayer,
   calculateAccusationsOnPlayer,
   hasCardAgainst,
   removeCardColourFromPlayer,
-  removeCardTypeFromPlayer
-} from './utils/salem';
+  removeCardTypeFromPlayer,
+} from "./utils/salem";
 import {
   getCurrentPlayerState,
   getPlayerState,
   isWitchRevealed,
   allTryalCardsRevealed,
-  killPlayer
-} from './utils/player';
-import {
-  revealTryalCard
-} from './utils/tryal';
-
-
-
+  killPlayer,
+} from "./utils/player";
+import { revealTryalCard } from "./utils/tryal";
 
 function generateSalemCardType(title, numberOfCards = 0) {
   let cards = [];
@@ -44,12 +33,18 @@ function generateSalemCardType(title, numberOfCards = 0) {
   let cardColour = cardIdParts[1];
 
   for (let i = 0; i < numberOfCards; i++) {
-    cards.push({
+    let cardDef = {
       id: `${cardTitle}-${i}`,
       title: `${cardTitle}`,
       type: cardTitle.toUpperCase(),
-      colour: cardColour
-    })
+      colour: cardColour,
+    };
+
+    if (cardIdParts[1] === undefined) {
+      cardDef.isRevealed = false;
+    }
+
+    cards.push(cardDef);
   }
   return cards;
 }
@@ -57,71 +52,67 @@ function generateSalemCardType(title, numberOfCards = 0) {
 const ACCUSATIONS_NEEDED_FOR_TRYAL = 7;
 
 const CARDS_DEF = {
-  "Accusation_RED": 35, //red
-  "Evidence_RED": 5, // red
-  "Witness_RED": 1, // red
-  "Stocks_GREEN": 3, // green
-  "Alibi_GREEN": 3,// green
-  "Scapegoat_GREEN": 2, // green
-  "Arson_GREEN": 1, // green
-  "Robbery_GREEN": 1, // green
-  "Curse_GREEN": 1, // blue 
-  "Matchmaker_BLUE": 2, // blue
-  "Asylum_BLUE": 1, // blue
-  "Piety_BLUE": 1 // blue
-}
-
-
+  Accusation_RED: 35, //red
+  Evidence_RED: 5, // red
+  Witness_RED: 1, // red
+  Stocks_GREEN: 3, // green
+  Alibi_GREEN: 3, // green
+  Scapegoat_GREEN: 2, // green
+  Arson_GREEN: 1, // green
+  Robbery_GREEN: 1, // green
+  Curse_GREEN: 1, // blue
+  Matchmaker_BLUE: 2, // blue
+  Asylum_BLUE: 1, // blue
+  Piety_BLUE: 1, // blue
+};
 
 const SETUPS = {
   4: {
-    "not": 18,
-    "witch": 1,
-    "constable": 1
+    not: 18,
+    witch: 1,
+    constable: 1,
   },
   5: {
-    "not": 23,
-    "witch": 1,
-    "constable": 1
+    not: 23,
+    witch: 1,
+    constable: 1,
   },
   6: {
-    "not": 27,
-    "witch": 2,
-    "constable": 1
+    not: 27,
+    witch: 2,
+    constable: 1,
   },
   7: {
-    "not": 32,
-    "witch": 2,
-    "constable": 1
+    not: 32,
+    witch: 2,
+    constable: 1,
   },
   8: {
-    "not": 29,
-    "witch": 2,
-    "constable": 1
+    not: 29,
+    witch: 2,
+    constable: 1,
   },
   9: {
-    "not": 33,
-    "witch": 2,
-    "constable": 1
+    not: 33,
+    witch: 2,
+    constable: 1,
   },
   10: {
-    "not": 27,
-    "witch": 2,
-    "constable": 1
+    not: 27,
+    witch: 2,
+    constable: 1,
   },
   11: {
-    "not": 30,
-    "witch": 2,
-    "constable": 1
+    not: 30,
+    witch: 2,
+    constable: 1,
   },
   12: {
-    "not": 33,
-    "witch": 2,
-    "constable": 1
-  }
-
-}
-
+    not: 33,
+    witch: 2,
+    constable: 1,
+  },
+};
 
 const CHARACTERS = [
   "Ann Putnam",
@@ -138,11 +129,11 @@ const CHARACTERS = [
   "George Burroughs",
   "John Proctor",
   "Tituba",
-  "Will Griggs"
-]
+  "Will Griggs",
+];
 
 function initializePlayers(numPlayers) {
-  let defaultPlayers = {}
+  let defaultPlayers = {};
   for (let playerId = 0; playerId < numPlayers; playerId++) {
     defaultPlayers[playerId] = {
       isWitch: false,
@@ -150,12 +141,11 @@ function initializePlayers(numPlayers) {
       character: "",
       hand: [],
       tryalCards: [],
-      revealedTryalCards: [],
       tryalCardCount: 0,
       appliedBlueCards: [],
       appliedRedCards: [],
       appliedGreenCards: [],
-    }
+    };
   }
 
   return defaultPlayers;
@@ -171,7 +161,9 @@ const Salem = {
   setup: (ctx) => {
     let salemDeck = [];
     for (let card in CARDS_DEF) {
-      salemDeck = salemDeck.concat(generateSalemCardType(card, CARDS_DEF[card]))
+      salemDeck = salemDeck.concat(
+        generateSalemCardType(card, CARDS_DEF[card])
+      );
     }
 
     let setupState = SETUPS[ctx.numPlayers];
@@ -179,7 +171,9 @@ const Salem = {
     let witchCardDeck = [];
 
     for (let card in setupState) {
-      witchCardDeck = witchCardDeck.concat(generateSalemCardType(card, setupState[card]))
+      witchCardDeck = witchCardDeck.concat(
+        generateSalemCardType(card, setupState[card])
+      );
     }
 
     salemDeck = ctx.random.Shuffle(salemDeck);
@@ -191,10 +185,8 @@ const Salem = {
     // Assign characters
     let alivePlayers = [...ctx.playOrder];
     for (let player of alivePlayers) {
-
       playerState[player].character = characterDeck.pop();
     }
-
 
     // Assign witch cards
     while (witchDeck.length > 0) {
@@ -221,7 +213,6 @@ const Salem = {
       playerState[player].hand.push(salemDeck.pop());
     }
 
-
     let conspiracyCard = generateSalemCardType("Conspiracy_BLACK", 1);
     let nightCard = generateSalemCardType("Night_BLACK", 1);
 
@@ -234,16 +225,16 @@ const Salem = {
     salemDeck.push(...nightCard);
 
     return {
+      nightVotes: {},
+      playersConfessed: [],
       playerState,
       salemDeck,
       salemDiscard: [],
-      alivePlayers
+      alivePlayers,
     };
   },
   moves: {
-    play() {
-
-    }
+    play() {},
   },
 
   phases: {
@@ -251,7 +242,7 @@ const Salem = {
       endIf: (G, ctx) => {
         let totalVotes = 0;
         for (let playerId in G.dawnVotes) {
-          totalVotes += G.dawnVotes[playerId]
+          totalVotes += G.dawnVotes[playerId];
         }
 
         let numWitches = 0;
@@ -262,12 +253,9 @@ const Salem = {
           }
         }
 
-
-
         if (totalVotes === numWitches) {
-          return true
+          return true;
         }
-
 
         return false;
       },
@@ -280,16 +268,16 @@ const Salem = {
         let playerToAssignBlackCat;
 
         if (playersWithVotes.length > 1) {
-          playerToAssignBlackCat = playersWithVotes[ctx.random.Die(playersWithVotes.length) - 1];
+          playerToAssignBlackCat =
+            playersWithVotes[ctx.random.Die(playersWithVotes.length) - 1];
         } else {
           playerToAssignBlackCat = playersWithVotes[0];
         }
         let blackCatCard = generateSalemCardType("Blackcat_BLUE", 1);
         playCardOnPlayer(G, ctx, blackCatCard, playerToAssignBlackCat);
-
       },
       onBegin: (G, ctx) => {
-        G.dawnVotes = {}
+        G.dawnVotes = {};
       },
       moves: {
         voteBlackCat(G, ctx, playerId) {
@@ -298,20 +286,18 @@ const Salem = {
           } else {
             G.dawnVotes[playerId]++;
           }
-
-        }
+        },
       },
       start: true,
       next: "mainGame",
 
       turn: {
         order: {
-
           first: (G, ctx) => {
-            return 0
+            return 0;
           },
           next: (G, ctx) => {
-            return ctx.playOrderPos + 1
+            return ctx.playOrderPos + 1;
           },
 
           playOrder: (G, ctx) => {
@@ -322,16 +308,45 @@ const Salem = {
               }
             }
             return witches;
-          }
-        }
-      }
-
-
+          },
+        },
+      },
     },
     mainGame: {
       turn: {
+        order: {
+          first: (G, ctx) => 0,
+          next: (G, ctx) => {
+            let currentPlayer = ctx.currentPlayer;
 
-        order: TurnOrder.RESET,
+            let foundIndex;
+            for(let i = 0; i< G.alivePlayers.length; i++) {
+              let player = G.alivePlayers[i];
+              if(player === currentPlayer) {
+                foundIndex = i;
+              }
+            }
+
+            let nextPlayer = G.alivePlayers[foundIndex + 1];
+            if (nextPlayer === undefined) {
+              nextPlayer = G.alivePlayers[0];
+            }
+
+            let nextPlayerIndex;
+            for(let i = 0; i < ctx.playOrder.length; i++) {
+              let playerId = ctx.playOrder[i];
+              if(playerId === nextPlayer) {
+                nextPlayerIndex = i;
+              }
+            }
+
+            if(nextPlayerIndex === undefined) {
+              throw new Error("Can't find next player");
+            }
+
+            return nextPlayerIndex
+          }
+        },
         onBegin: (G, ctx) => {
           G.drawnCardsThisTurn = 0;
 
@@ -339,9 +354,13 @@ const Salem = {
         },
 
         endIf: (G, ctx) => {
+          let shouldReturn = false;
           if (G.drawnCardsThisTurn === 2) {
-            return true;
+            shouldReturn = true;
           }
+
+          return shouldReturn;
+
         },
         onEnd: (G, ctx) => {
           removeCardTypeFromPlayer(G, ctx, "STOCKS", ctx.currentPlayer);
@@ -350,37 +369,61 @@ const Salem = {
         onMove: (G, ctx) => {
           let currentPlayerState = getCurrentPlayerState(G, ctx);
           let hand = currentPlayerState.hand;
-          
-          for(let card of hand) {
-            if(card.type === "CONSPIRACY") {
-              let playersToTakeToConspiracy = {};
-              for(let player of G.alivePlayers) {
-                playersToTakeToConspiracy[player] = "conspiracy";
-              }
 
-              ctx.events.setActivePlayers({
-                value: playersToTakeToConspiracy
-              });
-
-              G.isConspiracy = true;
-            }
-            else if(card.type === "NIGHT") {
-              let playersToTakeToNight = {};
-              for(let player of G.alivePlayers) {
-                let playerState = getPlayerState(G, ctx, player);
-
-                if(playerState.isWitch || playerState.isConstable) {
-                  playersToTakeToNight[player] = "night";
+          if (!G.isNight) {
+            let newHand = [];
+            for (let card of hand) {
+              
+              if (card.type === "CONSPIRACY") {
+                let playersToTakeToConspiracy = {};
+                for (let player of G.alivePlayers) {
+                  playersToTakeToConspiracy[player] = "conspiracy";
                 }
-                
+
+                ctx.events.setActivePlayers({
+                  value: playersToTakeToConspiracy,
+                });
+
+                G.isConspiracy = true;
+              } else if (card.type === "NIGHT") {
+                let playersToTakeToNight = {};
+                let constableToTakeToNight = {};
+                for (let player of G.alivePlayers) {
+                  let playerState = getPlayerState(G, ctx, player);
+
+                  if (playerState.isWitch) {
+                    playersToTakeToNight[player] = {
+                      stage: "nightWitch",
+                      moveLimit: 1,
+                    };
+                  }
+
+                  if (playerState.isConstable) {
+                    constableToTakeToNight[player] = {
+                      stage: "nightConstable",
+                      moveLimit: 1,
+                    };
+                  }
+                }
+
+                ctx.events.setActivePlayers({
+                  value: playersToTakeToNight,
+                  next: {
+                    value: constableToTakeToNight,
+                    next: {
+                      all: "nightTryal",
+                      moveLimit: 1,
+                    },
+                  },
+                });
+
+                G.isNight = true;
               }
-
-              ctx.events.setActivePlayers({
-                value: playersToTakeToNight
-              });
-
-              G.isNight = true;
+              else {
+                newHand.push(card);
+              }
             }
+            currentPlayerState.hand = newHand;
           }
         },
         stages: {
@@ -389,88 +432,183 @@ const Salem = {
               drawCard(G, ctx) {
                 drawCardFromDeck(G, ctx);
                 G.drawnCardsThisTurn++;
-              }
-            }
+              },
+            },
           },
           playCards: {
             moves: {
-              playCard(G, ctx, cardToPlay, player, targetPlayer, selectedTargetCards) {
+              playCard(
+                G,
+                ctx,
+                cardToPlay,
+                player,
+                targetPlayer,
+                selectedTargetCards
+              ) {
                 removeCardFromCurrentPlayer(G, ctx, cardToPlay);
-                playCardOnPlayer(G, ctx, cardToPlay, player, targetPlayer, selectedTargetCards);
+                playCardOnPlayer(
+                  G,
+                  ctx,
+                  cardToPlay,
+                  player,
+                  targetPlayer,
+                  selectedTargetCards
+                );
 
-                let totalAccusations = calculateAccusationsOnPlayer(G, ctx, player);
+                let totalAccusations = calculateAccusationsOnPlayer(
+                  G,
+                  ctx,
+                  player
+                );
                 if (totalAccusations >= ACCUSATIONS_NEEDED_FOR_TRYAL) {
-                  ctx.events.setStage("tryal")
+                  ctx.events.setStage("tryal");
                 }
-              }
-            }
+              },
+            },
           },
           tryal: {
             moves: {
               selectTryalCard(G, ctx, tryalCardIndex, targetPlayer) {
                 revealTryalCard(G, ctx, tryalCardIndex, targetPlayer);
 
-                
-                if (isWitchRevealed(G, ctx, targetPlayer) || allTryalCardsRevealed(G, ctx, targetPlayer)) {
+                if (
+                  isWitchRevealed(G, ctx, targetPlayer) ||
+                  allTryalCardsRevealed(G, ctx, targetPlayer)
+                ) {
                   killPlayer(G, ctx, targetPlayer);
                 }
-                
+
                 removeCardColourFromPlayer(G, ctx, "RED", targetPlayer);
                 ctx.events.setStage("playCards");
-              }
-            }
+              },
+            },
           },
-          
+
           conspiracy: {
-            moves: {
-
-            }
+            moves: {},
           },
-          night: {
+          nightWitch: {
             moves: {
+              voteKill(G, ctx, playerId) {
+                if (G.nightVotes[playerId] === undefined) {
+                  G.nightVotes[playerId] = 1;
+                } else {
+                  G.nightVotes[playerId]++;
+                }
 
-            }
-          }
-        }
+                //ctx.events.endStage();
+              },
+            },
+          },
+
+          nightConstable: {
+            moves: {
+              savePlayer(G, ctx, playerId) {
+                G.nightSave = playerId;
+              },
+            },
+          },
+
+          nightTryal: {
+            moves: {
+              confess(G, ctx, tryalCard) {
+                let playerWhoMoved = ctx.playerID;
+                let newPlayersConfessed = [...G.playersConfessed];
+
+                if (tryalCard !== null) {
+                  tryalCard.isRevealed = true;
+                  newPlayersConfessed.push(playerWhoMoved);
+                  G.playersConfessed = newPlayersConfessed;
+                }
+
+
+ 
+
+
+
+                let isLastPersonToConfess = Object.keys(ctx.activePlayers).length === 1;
+                if (isLastPersonToConfess) {
+                  let playersWithVotes = [];
+                  for (let playerId in G.nightVotes) {
+                    playersWithVotes.push(playerId);
+                  }
+
+                  let playerToKill;
+
+                  if (playersWithVotes.length > 1) {
+                    playerToKill =
+                      playersWithVotes[
+                        ctx.random.Die(playersWithVotes.length) - 1
+                      ];
+                  } else {
+                    playerToKill = playersWithVotes[0];
+                  }
+
+                  let playerToSave = G.nightSave;
+
+                  // Kill player who hasnt been saved
+
+                  let playerDidConfess = G.playersConfessed.includes(playerToKill);
+
+                  if (playerToSave !== playerToKill && !playerDidConfess) {
+                    killPlayer(G, ctx, playerToKill);
+                  }
+
+                  let playersToKill = [];
+                  for(let player of G.alivePlayers) {
+                    if (
+                      isWitchRevealed(G, ctx, playerWhoMoved) ||
+                      allTryalCardsRevealed(G, ctx, playerWhoMoved)
+                    ) {
+                      playersToKill.push(player);
+                      
+                    }
+                  }
+
+                  for(let player of playersToKill) {
+                    killPlayer(G, ctx, player);
+                  }
+
+                  G.playersConfessed = [];
+                  G.nightVotes = {};
+                  G.nightSave = null;
+                  G.isNight = false;
+
+                  if(G.alivePlayers.includes(ctx.currentPlayer)) {
+                    ctx.events.setActivePlayers({value: {[ctx.currentPlayer]:"drawCards" }});
+                  }
+                  else {
+                    G.drawnCardsThisTurn = 0;
+                    ctx.events.endTurn();
+                  }                  
+                }
+              },
+            },
+          },
+        },
       },
-
-    }
+    },
   },
-
-}
-
-
-
+};
 
 const SalemClient = Client({
   game: Salem,
   numPlayers: 8,
   board: Board,
-  multiplayer: Local()
+  multiplayer: Local(),
 });
 
-const App = () => ( <div>
-  <
-  SalemClient playerID = "0" / >
-  <
-  SalemClient playerID = "1" / >
-  <
-  SalemClient playerID = "2" / >
-  <
-  SalemClient playerID = "3" / >
-  <
-  SalemClient playerID = "4" / >
-  <
-  SalemClient playerID = "5" / >
-  <
-  SalemClient playerID = "6" / >
-  <
-  SalemClient playerID = "7" / >
+const App = () => (
+  <div>
+    <SalemClient playerID="0" />
+    <SalemClient playerID="1" />
+    <SalemClient playerID="2" />
+    <SalemClient playerID="3" />
+    <SalemClient playerID="4" />
+    <SalemClient playerID="5" />
+    <SalemClient playerID="6" />
+    <SalemClient playerID="7" />
   </div>
-)
-
-
-
-
+);
 
 export default App;

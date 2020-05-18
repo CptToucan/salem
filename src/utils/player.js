@@ -23,12 +23,15 @@ export function allTryalCardsRevealed(G, ctx, targetPlayer) {
   let playerState = getPlayerState(G, ctx, targetPlayer);
   let tryalCards = playerState.tryalCards;
 
-  if(tryalCards.length === 0) {
-    return true;
+  let allTryalCardsRevealed = true;
+  for(let card of tryalCards) {
+    if(card.isRevealed === false) {
+      allTryalCardsRevealed = false;
+      break;
+    }
   }
-  else {
-    return false;
-  }
+
+  return allTryalCardsRevealed;
 }
 
 export function killPlayer(G, ctx, targetPlayer) {

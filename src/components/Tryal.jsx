@@ -39,12 +39,18 @@ export default class PlayCard extends React.Component {
     })
   }
 
-  renderTryalCards(numTryalCards) {
-    let tryalCards = [];
-    for(let i = 0; i < numTryalCards; i++) {
-      tryalCards.push(<Button onClick={() => this.selectTryalCard(i)}>Tryal Card {i}</Button>);
+  renderTryalCards(tryalCards) {
+    let tryalCardsToRender = [];
+    for(let i = 0; i < tryalCards.length; i++) {
+      let card = tryalCards[i];
+      if(card.isRevealed) {
+        tryalCardsToRender.push(<Button>{card.title}</Button>)
+      }
+      else {
+        tryalCardsToRender.push(<Button onClick={() => this.selectTryalCard(i)}>Tryal Card {i}</Button>);
+      }
     }
-    return tryalCards;
+    return tryalCardsToRender;
   }
 
   render() {
@@ -56,7 +62,7 @@ export default class PlayCard extends React.Component {
       }
     }
     if(this.state.selectedCardIndex === null) {
-      return this.renderTryalCards(getPlayerState(this.props.G, this.props.ctx, this.playerInTryal).tryalCardCount);
+      return this.renderTryalCards(getPlayerState(this.props.G, this.props.ctx, this.playerInTryal).tryalCards);
     }
     else {
       return (

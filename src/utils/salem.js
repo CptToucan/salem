@@ -19,7 +19,29 @@ export function playBlue(G, ctx, cardToPlay, targetPlayer) {
   let targetPlayerState = getPlayerState(G, ctx, targetPlayer);
   let newBlueAppliedCards = [...targetPlayerState.appliedBlueCards];
   newBlueAppliedCards.push(cardToPlay);
-  targetPlayerState.appliedBlueCards = newBlueAppliedCards;
+
+  let matchmakerCount = 0;
+  for(let card of newBlueAppliedCards) {
+    if(card.type === "MATCHMAKER") {
+      matchmakerCount++;
+    }
+  }
+
+  let blueAppliedCardsToUse = [];
+
+  if(matchmakerCount >= 2) {
+    for(let card of newBlueAppliedCards) {
+      if(card.type !== "MATCHMAKER") {
+        blueAppliedCardsToUse.push(card);
+      }
+    }
+  }
+  else {
+    blueAppliedCardsToUse = newBlueAppliedCards;
+  }
+
+
+  targetPlayerState.appliedBlueCards = blueAppliedCardsToUse;
   return targetPlayerState;
 }
 
@@ -113,6 +135,22 @@ export function removeCardFromCurrentPlayer(G, ctx, cardToPlay) {
   }
 
   currentPlayerState.hand = newHand;
+}
+
+export function removeCardFromPlayersHand(G, ctx, card, playerId) {
+  let playerState = getCurrentPlayerState(G, ctx, playerId);
+
+  let playersHand = playerState.hand;
+
+  let newHand = []
+  for(let cardInHand of playersHand) 
+  {
+    if(card.id !== cardInHand.id) {
+      newHand.push(cardInHand);
+    }
+  }
+
+  playerState.hand = newHand;
 }
 
 export function playCardOnPlayer(G, ctx, cardToPlay, player, targetPlayer, selectedTargetCards) {

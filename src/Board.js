@@ -72,6 +72,10 @@ export default class SalemBoard extends React.Component {
     this.props.moves.confess(tryalCard);
   }
 
+  pickedTryalCard(tryalCardIndex) {
+    this.props.moves.pickedTryalCard(tryalCardIndex);
+  }
+
   render() {
     if (this.props.ctx.phase === "dawn") {
       let characters = [];
@@ -188,12 +192,19 @@ export default class SalemBoard extends React.Component {
                 G={this.props.G}
                 ctx={this.props.ctx}
                 playerID={this.props.playerID}
+                pickedTryal={(tryalCardIndex) => {this.pickedTryalCard(tryalCardIndex)}}
               />
             </div>
           );
         }
       } else if (this.props.G.isNight) {
         return <div>Night time, pray you're not next to die...</div>;
+      }
+      else if(this.props.G.isTryal) {
+        return <div>A tryal is taking place...</div>
+      }
+      else if (this.props.G.isConspiracy) {
+        return <div>The conspiracy is still taking place...</div>
       } else if (this.props.playerID === this.props.ctx.currentPlayer) {
         if (
           hasCardAgainst(

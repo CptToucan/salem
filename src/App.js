@@ -10,11 +10,13 @@ import { TurnOrder } from "boardgame.io/core";
 import update from "immutability-helper";
 import {
   removeCardFromCurrentPlayer,
+  removeCardFromPlayersHand,
   playCardOnPlayer,
   calculateAccusationsOnPlayer,
   hasCardAgainst,
   removeCardColourFromPlayer,
   removeCardTypeFromPlayer,
+  addCardToDiscardPile,
 } from "./utils/salem";
 import {
   getCurrentPlayerState,
@@ -22,6 +24,7 @@ import {
   isWitchRevealed,
   allTryalCardsRevealed,
   killPlayer,
+  updatePlayerRoles
 } from "./utils/player";
 import { revealTryalCard } from "./utils/tryal";
 
@@ -63,7 +66,7 @@ const CARDS_DEF = {
   Curse_GREEN: 1, // blue
   Matchmaker_BLUE: 2, // blue
   Asylum_BLUE: 1, // blue
-  Piety_BLUE: 1, // blue
+  Piety_BLUE: 35, // blue
 };
 
 const SETUPS = {
@@ -142,6 +145,7 @@ function initializePlayers(numPlayers) {
       hand: [],
       tryalCards: [],
       tryalCardCount: 0,
+      _pickedTryalCard: null,
       appliedBlueCards: [],
       appliedRedCards: [],
       appliedGreenCards: [],
@@ -152,9 +156,38 @@ function initializePlayers(numPlayers) {
 }
 
 function drawCardFromDeck(G, ctx) {
-  let cardToAssign = G.salemDeck.pop();
-  let playerState = G.playerState;
-  playerState[ctx.currentPlayer].hand.push(cardToAssign);
+
+  if(G.salemDeck.length <= 0) {
+    let newDeck = [];
+    let nightCard = [];
+
+    for(let card of G.salemDiscard) {
+      if(card.type !== "NIGHT") {
+        newDeck.push(card);
+      }
+      else {
+        nightCard.push(card);
+      }
+      
+    }
+
+    newDeck = ctx.random.Shuffle(newDeck);
+    newDeck.push(...nightCard);
+
+    G.salemDeck = newDeck;
+  }
+
+
+
+  let newSalemDeck = [...G.salemDeck];
+  let playerState = getPlayerState(G, ctx, ctx.currentPlayer);
+  let cardToAssign = newSalemDeck.pop();
+  let newHand = [...playerState.hand];
+  newHand.push(cardToAssign);
+  playerState.hand = newHand;
+  G.salemDeck = newSalemDeck;
+
+  return cardToAssign;
 }
 
 const Salem = {
@@ -217,15 +250,17 @@ const Salem = {
     let nightCard = generateSalemCardType("Night_BLACK", 1);
 
     // Add conspiracy
-    salemDeck = salemDeck.concat(conspiracyCard);
+    //salemDeck.push(...conspiracyCard);
+   
     salemDeck = ctx.random.Shuffle(salemDeck);
+    salemDeck.push(...conspiracyCard);
 
     //Add night to bottom
-    //salemDeck = nightCard.concat(salemDeck) salemDeck.concat(nightCard);
-    salemDeck.push(...nightCard);
+    salemDeck.unshift(...nightCard);
 
     return {
       nightVotes: {},
+      hasCheckedBlackCatForConspiracy: false,
       playersConfessed: [],
       playerState,
       salemDeck,
@@ -274,7 +309,7 @@ const Salem = {
           playerToAssignBlackCat = playersWithVotes[0];
         }
         let blackCatCard = generateSalemCardType("Blackcat_BLUE", 1);
-        playCardOnPlayer(G, ctx, blackCatCard, playerToAssignBlackCat);
+        playCardOnPlayer(G, ctx, blackCatCard[0], playerToAssignBlackCat);
       },
       onBegin: (G, ctx) => {
         G.dawnVotes = {};
@@ -370,21 +405,42 @@ const Salem = {
           let currentPlayerState = getCurrentPlayerState(G, ctx);
           let hand = currentPlayerState.hand;
 
-          if (!G.isNight) {
+          if (!G.isNight && !G.isConspiracy) {
             let newHand = [];
             for (let card of hand) {
               
               if (card.type === "CONSPIRACY") {
-                let playersToTakeToConspiracy = {};
-                for (let player of G.alivePlayers) {
-                  playersToTakeToConspiracy[player] = "conspiracy";
+
+                if(G.hasCheckedBlackCatForConspiracy === false) {
+                  for(let player of G.alivePlayers) {
+                    if(hasCardAgainst(G, ctx, "BLACKCAT", player)) {
+                      G.blackCatTryal = true;
+                      G.hasCheckedBlackCatForConspiracy = true;
+                      ctx.events.setStage("tryal")
+                      return;
+                    }
+                  }
                 }
 
-                ctx.events.setActivePlayers({
-                  value: playersToTakeToConspiracy,
-                });
 
-                G.isConspiracy = true;
+
+                  let playersToTakeToConspiracy = {};
+                  for (let player of G.alivePlayers) {
+                    playersToTakeToConspiracy[player] = "conspiracy";
+                  }
+  
+                  removeCardFromPlayersHand(G, ctx, card, ctx.currentPlayer);
+                  addCardToDiscardPile(G, ctx, card);
+  
+                  ctx.events.setActivePlayers({
+                    value: playersToTakeToConspiracy,
+                    moveLimit: 1
+                  });
+  
+                  G.isConspiracy = true;
+                  G.hasCheckedBlackCatForConspiracy = false;
+
+
               } else if (card.type === "NIGHT") {
                 let playersToTakeToNight = {};
                 let constableToTakeToNight = {};
@@ -405,6 +461,9 @@ const Salem = {
                     };
                   }
                 }
+
+                removeCardFromPlayersHand(G, ctx, card, ctx.currentPlayer);
+                addCardToDiscardPile(G, ctx, card, ctx.currentPlayer);
 
                 ctx.events.setActivePlayers({
                   value: playersToTakeToNight,
@@ -430,7 +489,8 @@ const Salem = {
           drawCards: {
             moves: {
               drawCard(G, ctx) {
-                drawCardFromDeck(G, ctx);
+                let cardDrawn = drawCardFromDeck(G, ctx);
+                console.log(cardDrawn);
                 G.drawnCardsThisTurn++;
               },
             },
@@ -478,14 +538,85 @@ const Salem = {
                   killPlayer(G, ctx, targetPlayer);
                 }
 
-                removeCardColourFromPlayer(G, ctx, "RED", targetPlayer);
-                ctx.events.setStage("playCards");
+                debugger;
+                if(G.blackCatTryal === true) {
+                  G.blackCatTryal = false;
+                }
+                else {
+                  ctx.events.setStage("playCards");
+                  removeCardColourFromPlayer(G, ctx, "RED", targetPlayer);
+                }
+
+                updatePlayerRoles(G, ctx);
               },
             },
           },
 
           conspiracy: {
-            moves: {},
+            moves: {
+              pickedTryalCard(G, ctx, cardIndex) {
+              
+                  let playerID = ctx.playerID;
+                  let alivePlayers = G.alivePlayers;
+              
+                  let foundIndex;
+              
+                  for(let i = 0; i < alivePlayers.length; i++) {
+                    if(playerID === alivePlayers[i]) {
+                      foundIndex = i;
+                      break;
+                    }
+                  }
+              
+                  let indexOfNeighbour = foundIndex + 1;
+                  if(indexOfNeighbour >= alivePlayers.length) {
+                    indexOfNeighbour = 0;
+                  }
+              
+                  let neighbourId = alivePlayers[indexOfNeighbour];
+                  let neighbourPlayerState = getPlayerState(G, ctx, neighbourId);
+                  let playerState = getPlayerState(G, ctx, playerID);
+                  let tryalCards = playerState.tryalCards;
+
+                  let neighbourTryalCards = neighbourPlayerState.tryalCards;
+
+                  //let newTryalCards = [...tryalCards];
+                  let newNeighbourTryalCards = [];
+
+                  for(let i = 0; i < neighbourTryalCards.length; i++) {
+                    if(i !== cardIndex) {
+                      newNeighbourTryalCards.push(neighbourTryalCards[i]);
+                    }
+                    else {
+                      playerState._pickedTryalCard = neighbourTryalCards[i];
+                    }
+                  }
+
+                  neighbourPlayerState.tryalCards = newNeighbourTryalCards;
+ 
+
+                  let isLastPersonToTakeCard = Object.keys(ctx.activePlayers).length === 1;
+                  if (isLastPersonToTakeCard) {
+                    for(let player of G.alivePlayers) {
+                      let alivePlayerState = getPlayerState(G, ctx, player);
+                      let newAlivePlayerTryalCards = [];
+                      for(let card of alivePlayerState.tryalCards) {
+                        if(card !== null) {
+                          newAlivePlayerTryalCards.push(card);
+                        }
+                      }
+                      newAlivePlayerTryalCards.push(alivePlayerState._pickedTryalCard);
+                      alivePlayerState._pickedTryalCard = null;
+                      alivePlayerState.tryalCards = ctx.random.Shuffle(newAlivePlayerTryalCards);
+
+                      
+                    }
+
+                    updatePlayerRoles(G, ctx);
+                    G.isConspiracy = false;
+                  }
+              }
+            },
           },
           nightWitch: {
             moves: {
@@ -495,8 +626,6 @@ const Salem = {
                 } else {
                   G.nightVotes[playerId]++;
                 }
-
-                //ctx.events.endStage();
               },
             },
           },
@@ -520,11 +649,6 @@ const Salem = {
                   newPlayersConfessed.push(playerWhoMoved);
                   G.playersConfessed = newPlayersConfessed;
                 }
-
-
- 
-
-
 
                 let isLastPersonToConfess = Object.keys(ctx.activePlayers).length === 1;
                 if (isLastPersonToConfess) {
@@ -550,7 +674,7 @@ const Salem = {
 
                   let playerDidConfess = G.playersConfessed.includes(playerToKill);
 
-                  if (playerToSave !== playerToKill && !playerDidConfess) {
+                  if (playerToSave !== playerToKill && !playerDidConfess && !hasCardAgainst(G, ctx, "ASYLUM", playerToKill)) {
                     killPlayer(G, ctx, playerToKill);
                   }
 
@@ -580,7 +704,7 @@ const Salem = {
                   else {
                     G.drawnCardsThisTurn = 0;
                     ctx.events.endTurn();
-                  }                  
+                  }
                 }
               },
             },

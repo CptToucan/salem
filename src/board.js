@@ -1,4 +1,6 @@
 import React from "react";
+import { ThemeProvider } from '@material-ui/styles';
+import { createMuiTheme } from '@material-ui/core/styles';
 import Button from "@material-ui/core/Button";
 import Character from "./components/Character";
 import PlayCard from "./components/PlayCard";
@@ -33,6 +35,7 @@ import {
   hasCardAgainst,
 } from "./utils/salem";
 import { getCurrentPlayerState, getPlayerState } from "./utils/player";
+import PlayerView from "./PlayerView";
 
 export default class SalemBoard extends React.Component {
   dawnClickPlayer(playerId) {
@@ -77,7 +80,23 @@ export default class SalemBoard extends React.Component {
   }
 
   render() {
-    if (this.props.ctx.phase === "dawn") {
+
+    let theme = createMuiTheme({
+      palette: {
+        type: "dark"
+      }
+    })
+   return (
+   <div>
+     <ThemeProvider theme={theme}>
+      <PlayerView turnStatus={"Dawn is taking place..."}/>
+     </ThemeProvider>
+   </div>)
+  }
+}
+
+
+/** if (this.props.ctx.phase === "dawn") {
       let characters = [];
 
       let isWitch = this.props.G.playerState[this.props.playerID].isWitch;
@@ -237,6 +256,4 @@ export default class SalemBoard extends React.Component {
       }
     } else {
       return <div>Normal phase</div>;
-    }
-  }
-}
+    } */

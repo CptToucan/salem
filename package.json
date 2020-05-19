@@ -9,6 +9,7 @@
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
     "boardgame.io": "^0.39.9",
+    "esm": "^3.2.25",
     "immutability-helper": "^3.0.2",
     "node-sass": "^4.14.1",
     "react": "^16.13.1",

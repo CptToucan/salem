@@ -1,6 +1,42 @@
+div.hidden {
+  display: none;
+}
 
 
 
+#root {
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  height: 100vh;
+  display: flex;
+  background-color: #310000;
+  color: rgb(248, 198, 60);
+
+  div#lobby-view {
+    padding: 5px !important;
+    display: flex;
+    flex-grow: 1 1 0;
+    width: 100%;
+
+    div.phase {
+      width: 100%;
+
+
+    }
+  }
+}
+
+
+#lobby-exit.buttons {
+  position: fixed;
+  top: 0;
+  right: 0;
+}
+
+#game-exit.buttons {
+  position: fixed;
+  top: 20px;
+  right: 0;
+}
 
 
 

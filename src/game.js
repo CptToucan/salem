@@ -1,5 +1,3 @@
-import "./App.scss";
-
 import {
   removeCardFromCurrentPlayer,
   removeCardFromPlayersHand,

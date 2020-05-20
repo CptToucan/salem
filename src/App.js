@@ -11,16 +11,6 @@ import { Salem } from "./game";
 import { SocketIO } from 'boardgame.io/multiplayer'
 
 
-/*
-
-const SalemClient = Client({
-  game: Salem,
-  //numPlayers: 8,
-  board: SalemBoard,
-  multiplayer: SocketIO({server: "rowynn2:8000"})
-});
-
-*/
 
 /*
 const App = () => (
@@ -44,8 +34,8 @@ class App extends React.Component {
   render() {
     let importedGames = [{game: Salem, board: SalemBoard}];
     return(<Lobby
-      gameServer={`http://rowynn2:8000`}
-      lobbyServer={`http://rowynn2:8000`}
+      gameServer={`http://192.168.0.51:8000`}
+      lobbyServer={`http://192.168.0.51:8000`}
       gameComponents={importedGames}
     />)
   }

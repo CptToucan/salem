@@ -88,8 +88,9 @@ export default class SalemBoard extends React.Component {
     })
    return (
    <div>
+     
      <ThemeProvider theme={theme}>
-      <PlayerView turnStatus={"Dawn is taking place..."}/>
+      <PlayerView G={this.props.G} ctx={this.props.ctx} playerID={this.props.playerID} turnStatus={"Dawn is taking place..."}/>
      </ThemeProvider>
    </div>)
   }

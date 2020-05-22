@@ -241,10 +241,9 @@ export const Salem = {
     let nightCard = generateSalemCardType("Night_BLACK", 1);
 
     // Add conspiracy
-    //salemDeck.push(...conspiracyCard);
+    salemDeck.push(...conspiracyCard);
    
     salemDeck = ctx.random.Shuffle(salemDeck);
-    salemDeck[salemDeck.length - 2] = conspiracyCard[0];
 
     //Add night to bottom
     salemDeck.unshift(...nightCard);
@@ -374,9 +373,10 @@ export const Salem = {
           }
         },
         onBegin: (G, ctx) => {
-          G.drawnCardsThisTurn = 0;
-          G.playedCardsThisTurn = 0;
-
+          if(G.blackCatTryal !== true) {
+            G.drawnCardsThisTurn = 0;
+            G.playedCardsThisTurn = 0;
+          }
           return G;
         },
 
@@ -402,7 +402,6 @@ export const Salem = {
             for (let card of hand) {
               
               if (card.type === "CONSPIRACY") {
-
                 if(G.hasCheckedBlackCatForConspiracy === false) {
                   for(let player of G.alivePlayers) {
                     if(hasCardAgainst(G, ctx, "BLACKCAT", player)) {
@@ -533,6 +532,14 @@ export const Salem = {
 
                 if(G.blackCatTryal === true) {
                   G.blackCatTryal = false;
+                  if(G.drawnCardsThisTurn === 2) {
+                    
+                    ctx.events.endTurn();
+                  }
+                  else if(G.drawnCardsThisTurn === 1) {
+                    ctx.events.setStage("drawCards");
+                  }
+                  
                 }
                 else {
                   ctx.events.setStage("playCards");

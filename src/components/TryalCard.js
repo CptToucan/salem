@@ -7,7 +7,7 @@ export default class TryalCard extends React.Component {
       return (
         <button
           className="tryal-card tryal-card-revealed"
-          onClick={(e) => this.props.onClick(this.props.card, e)}
+          onClick={(e) => {console.log("clicked");this.props.onClick(this.props.card, e)}}
         >
           {this.props.card.type}
         </button>
@@ -16,7 +16,7 @@ export default class TryalCard extends React.Component {
       return (
         <button
           className="tryal-card tryal-card-hidden"
-          onClick={(e) => this.props.onClick(this.props.card, e)}
+          onClick={(e) => {console.log("clicked");this.props.onClick(this.props.card, e)}}
         >
           <div className="tryal-card-content">Tryal of Witchcraft</div>
         </button>

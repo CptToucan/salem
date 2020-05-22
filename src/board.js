@@ -39,7 +39,7 @@ import {
   hasCardAgainst,
 } from "./utils/salem";
 import Backdrop from "@material-ui/core/Backdrop";
-import { getCurrentPlayerState, getPlayerState } from "./utils/player";
+import { getCurrentPlayerState, getPlayerState, findMetadata } from "./utils/player";
 import PlayerView from "./PlayerView";
 
 const useStyles = (theme) => ({
@@ -139,7 +139,7 @@ class SalemBoard extends React.Component {
               this.toggleTurnDisplay(true);
             }}
           />
-          <Backdrop className={classes.backdrop} open={this.state.turnDisplay}>
+          <Backdrop className={classes.backdrop} open={this.state.turnDisplay && this.props.isActive}>
             {this.renderTurn()}
           </Backdrop>
         </ThemeProvider>
@@ -169,9 +169,7 @@ class SalemBoard extends React.Component {
       let alivePlayers = this.props.G.alivePlayers;
       let newAlivePlayers = [];
       for (let player of alivePlayers) {
-        let foundGameMeta = this.props.gameMetadata.find((playerElement) => {
-          return `${playerElement.id}` === `${player}`;
-        });
+        let foundGameMeta = findMetadata(this.props.G, this.props.ctx, this.props.gameMetadata, player);
 
         newAlivePlayers.push({ id: player, gameMeta: foundGameMeta });
       }
@@ -314,12 +312,14 @@ class SalemBoard extends React.Component {
         }
       }
       else if (this.props.playerID === this.props.ctx.currentPlayer) {
+        let playerState = getPlayerState(this.props.G, this.props.ctx, this.props.playerID);
         return (
           <Grid container spacing={0}>
             <Grid item xs={12}>
               <Button
                 className={classes.playDrawButton}
                 variant="contained"
+                disabled={playerState.hand.length <= 0}
                 size="large"
                 onClick={() => this.playCards()}
               >

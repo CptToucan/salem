@@ -3,8 +3,14 @@ import Button from "@material-ui/core/Button";
 import Character from "./Character";
 import { getPlayerState } from "../utils/player";
 import { calculateAccusationsOnPlayer, hasCardAgainst } from "../utils/salem";
+import Swiper from "react-id-swiper";
+import Modal from "@material-ui/core/Modal";
+import Backdrop from "@material-ui/core/Backdrop";
+import { withStyles, makeStyles } from "@material-ui/core/styles";
+import TryalView from "../TryalView";
+import TryalCard from "./TryalCard";
 
-const ACCUSATIONS_NEEDED_FOR_TRYAL = 7;
+const ACCUSATIONS_NEEDED_FOR_TRYAL = 1;
 
 export default class Tryal extends React.Component {
   constructor(props) {
@@ -41,16 +47,26 @@ export default class Tryal extends React.Component {
 
   renderTryalCards(tryalCards) {
     let tryalCardsToRender = [];
-    for(let i = 0; i < tryalCards.length; i++) {
-      let card = tryalCards[i];
-      if(card.isRevealed) {
-        tryalCardsToRender.push(<Button>{card.title}</Button>)
-      }
-      else {
-        tryalCardsToRender.push(<Button onClick={() => this.selectTryalCard(i)}>Tryal Card {i}</Button>);
-      }
-    }
-    return tryalCardsToRender;
+
+    const params = {
+      centeredSlides: true,
+      slidesPerView: 2
+    };
+
+    return (
+      <div className="swiper-parent-container">
+        <Swiper {...params}>
+          {tryalCards.map((card, index) => (
+            <div className="salem-card-swiper">
+              <TryalCard card={card} show={card.isRevealed} onClick={(card, event) => {
+                //event.stopPropagation()
+                this.selectTryalCard(index);
+              }} />
+            </div>
+          ))}
+        </Swiper>
+      </div>
+    );
   }
 
   render() {

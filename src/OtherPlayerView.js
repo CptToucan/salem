@@ -1,7 +1,7 @@
 import React from "react";
 import Swiper from "react-id-swiper";
 import Character from "./components/Character";
-import { getPlayerState } from "./utils/player";
+import { getPlayerState, findMetadata } from "./utils/player";
 import TryalCard from "./components/TryalCard";
 
 export default class OtherPlayer extends React.Component {
@@ -27,9 +27,7 @@ export default class OtherPlayer extends React.Component {
 
     for (let player of alivePlayers) {
       if (player !== this.props.ownPlayerId) {
-        let foundGameMeta = this.props.gameMeta.find((playerElement) => {
-          return `${playerElement.id}` === `${player}`;
-        });
+        let foundGameMeta = findMetadata(this.props.G, this.props.ctx, this.props.gameMeta, player);
 
         alivePlayersWithoutOwn.push({ id: player, gameMeta: foundGameMeta });
       }

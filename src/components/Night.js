@@ -23,6 +23,7 @@ export default class Night extends React.Component {
           <div key={characterName}>
             <Character
               key={characterName}
+              playerId={playerId}
               character={characterName}
               onClick={() => this.selectedPlayer(playerId)}
             />

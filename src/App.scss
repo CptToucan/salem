@@ -1,4 +1,4 @@
-@import 'swiper/swiper.scss';
+@import "swiper/swiper.scss";
 
 div.hidden {
   display: none;
@@ -28,14 +28,12 @@ $salem-green: #00700a;
 
     div.phase {
       width: 100%;
-
-
     }
   }
 }
 
 .swiper-parent-container {
-  width: 100%;
+  width: 100vw;
 }
 
 .salem-card-swiper {
@@ -48,6 +46,14 @@ $salem-green: #00700a;
   justify-content: center;
 }
 
+.player-swiper-container {
+position: relative;
+  width: 100%;
+  .player-swiper-wrapper {
+    width: 100%;
+  }
+}
+
 button.tryal-card {
   min-height: 200px;
   max-width: 150px;
@@ -55,22 +61,109 @@ button.tryal-card {
   font-family: "Roboto";
   font-size: 16px;
   border-radius: 5px;
-  border: 5px solid ;
+  border: 5px solid;
 
   .tryal-card-content {
     transform: rotate(-45deg);
-
   }
 }
 
+div.other-player-swiper {
+  display: flex;
+  justify-content: center;
+  padding-left: 20px;
+  padding-right: 20px;
+  width: 100%;
+  min-height: 50vh;
+}
+button.other-player-details {
+  border: 5px solid #928134;
+  background-color: #d6c162;
+  border-radius: 5px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  margin: 0;
+  text-decoration: none;
+  font-family: sans-serif;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: center;
+  transition: background 250ms ease-in-out, 
+              transform 150ms ease;
+
+  .character-info {
+    h6 {
+      font-size: 16px;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  .player-header {
+    display: flex;
+
+    h5 {
+      font-size: 16px;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  .tryal-card-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    position: relative;
+    bottom: 0px;
+
+    button.tryal-card {
+      margin: 0;
+      text-decoration: none;
+      font-family: sans-serif;
+      font-size: 1rem;
+      cursor: pointer;
+      text-align: center;
+      transition: background 250ms ease-in-out, transform 150ms ease;
+      max-height: 15vh;
+      min-height: 15vh;
+      max-width: 70px;
+      font-family: "Roboto";
+      font-size: 8px;
+      border-radius: 5px;
+      border: 3px solid;
+
+      .tryal-card-content {
+        transform: rotate(0deg);
+      }
+    }
+  }
+}
 
 button.salem-card {
   font-family: "Roboto";
   min-height: 200px;
-  width: 100%;
+  //width: 100%;
+  flex: 1 1 0;
   background-color: rgb(245, 244, 204);
   border-radius: 5px;
   border: 5px solid transparent;
+
+
+    display: inline-block;
+    padding: 0.5rem 0.5rem;
+    margin: 0;
+    text-decoration: none;
+    color: #ffffff;
+    font-family: sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: center;
+    transition: background 250ms ease-in-out, 
+                transform 150ms ease;
+
 
   &.RED {
     border-color: $salem-red;
@@ -106,7 +199,6 @@ button.salem-card {
   //width: 250px;
 }
 
-
 div.turn-status {
   position: absolute;
   top: 0;
@@ -134,7 +226,6 @@ textarea.log-messages {
   background-color: lighten($salem-background, 5%);
 }
 
-
 #lobby-exit.buttons {
   position: fixed;
   top: 0;
@@ -146,6 +237,3 @@ textarea.log-messages {
   top: 20px;
   right: 0;
 }
-
-
-

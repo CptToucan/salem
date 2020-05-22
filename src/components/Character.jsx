@@ -24,22 +24,6 @@ const CHARACTERS = [
   "Will Griggs",
 ];
 
-const styles = makeStyles({
-  root: {
-    minWidth: 275,
-  },
-  bullet: {
-    display: "inline-block",
-    margin: "0 2px",
-    transform: "scale(0.8)",
-  },
-  title: {
-    fontSize: 14,
-  },
-  pos: {
-    marginBottom: 12,
-  },
-});
 
 
 
@@ -47,8 +31,17 @@ const styles = makeStyles({
 
 class Character extends React.Component {
   render() {
-    return (<Button onClick={this.props.onClick}>{this.props.character}</Button>)
+    return(<div className="character-info">
+      <h6>
+      {this.props.character}
+      </h6>
+
+      <div>
+        Character abilities have not been implemented yet...
+      </div>
+    </div>)
   }
+  //return (<div onClick={this.props.onClick}>{this.props.character}</button>)
   /*
   render() {
 
@@ -87,4 +80,4 @@ class Character extends React.Component {
   */
 }
 
-export default withStyles(styles)(Character);
+export default Character;

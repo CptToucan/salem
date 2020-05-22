@@ -2,9 +2,13 @@ import React from "react";
 import SalemCard from "./components/SalemCard";
 import Swiper from "react-id-swiper";
 
-export default class HandView extends React.Component {
+export default class AppliedCardsView extends React.Component {
   render() {
-    let hand = this.props.hand;
+    let redCards = this.props.playerState.appliedRedCards;
+    let blueCards = this.props.playerState.appliedBlueCards;
+    let greenCards = this.props.playerState.appliedGreenCards;
+
+    let allAppliedCards = [...redCards, ...blueCards, ...greenCards];
 
     const params = {
       effect: "coverflow",
@@ -23,28 +27,31 @@ export default class HandView extends React.Component {
     return (
       <div class="swiper-parent-container">
         <Swiper {...params}>
-          {hand.map((card) => (
-            <div class="salem-card-swiper">
-              <SalemCard card={card} cardClicked={(card, event) => {event.stopPropagation()}} />
-            </div>
-          ))}
+          {this.renderCards(allAppliedCards)}
         </Swiper>
       </div>
     );
   }
+
+  renderCards(cards) {
+    if(cards.length > 0) {
+      return cards.map((card) => (
+        <div className="salem-card-swiper">
+          <SalemCard
+            card={card}
+            cardClicked={(card, event) => {
+              event.stopPropagation();
+            }}
+          />
+        </div>
+      ))
+    }
+    else {
+      return <div>
+        <span>
+        No cards applied
+        </span>
+      </div>
+    }
+  }
 }
-
-/**
- *         {hand.map((card) => (
-          <SalemCard card={card} />
-        ))}
- */
-
-/**
-  *         {hand.map((card) => (
-          <SalemCard card={card} cardClicked={()=>{}}/>
-        ))}
-               {hand.map((card) => (
-          <SalemCard card={card} cardClicked={()=>{}} />
-        ))}
-  */

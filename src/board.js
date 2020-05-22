@@ -1,6 +1,10 @@
 import React from "react";
-import { ThemeProvider } from '@material-ui/styles';
-import { createMuiTheme } from '@material-ui/core/styles';
+import { ThemeProvider } from "@material-ui/styles";
+import { createMuiTheme } from "@material-ui/core/styles";
+import { withStyles, makeStyles } from "@material-ui/core/styles";
+import { ViewOfOtherPlayer } from "./OtherPlayerView";
+import Grid from "@material-ui/core/Grid";
+import Swiper from "react-id-swiper";
 import Button from "@material-ui/core/Button";
 import Character from "./components/Character";
 import PlayCard from "./components/PlayCard";
@@ -34,10 +38,44 @@ import {
   calculateAccusationsOnPlayer,
   hasCardAgainst,
 } from "./utils/salem";
+import Backdrop from "@material-ui/core/Backdrop";
 import { getCurrentPlayerState, getPlayerState } from "./utils/player";
 import PlayerView from "./PlayerView";
 
-export default class SalemBoard extends React.Component {
+const useStyles = (theme) => ({
+  backdrop: {
+    zIndex: theme.zIndex.drawer + 2,
+    color: "#fff",
+  },
+
+  playDrawButton: {
+    width: "100%",
+    minHeight: "30vw",
+    marginBottom: "10px",
+    backgroundColor: "#f8c63c",
+    "&:active": {
+      backgroundColor: "#e9d08c",
+    },
+    "&:hover": {
+      backgroundColor: "#e9d08c",
+    },
+    "&:focus": {
+      backgroundColor: "#e9d08c",
+    },
+  },
+});
+
+class SalemBoard extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      turnDisplay: false,
+    };
+  }
+
+  toggleTurnDisplay(isOpen) {
+    this.setState({ ...this.state, turnDisplay: isOpen });
+  }
   dawnClickPlayer(playerId) {
     this.props.moves.voteBlackCat(playerId);
     this.props.events.endTurn();
@@ -80,22 +118,220 @@ export default class SalemBoard extends React.Component {
   }
 
   render() {
-
     let theme = createMuiTheme({
       palette: {
-        type: "dark"
+        type: "dark",
+      },
+    });
+
+    const { classes } = this.props;
+    return (
+      <div>
+        <ThemeProvider theme={theme}>
+          <PlayerView
+            gameMetadata={this.props.gameMetadata}
+            G={this.props.G}
+            ctx={this.props.ctx}
+            playerID={this.props.playerID}
+            turnStatus={"Dawn is taking place..."}
+            isPlayerActive={this.props.isActive}
+            clickedMakeMove={() => {
+              this.toggleTurnDisplay(true);
+            }}
+          />
+          <Backdrop className={classes.backdrop} open={this.state.turnDisplay}>
+            {this.renderTurn()}
+          </Backdrop>
+        </ThemeProvider>
+      </div>
+    );
+  }
+
+  /**         onClick={() => {
+              this.toggleTurnDisplay(false);
+            }} */
+
+  renderTurn() {
+    const { classes } = this.props;
+    console.log(this.props.G, this.props.ctx);
+
+    if (this.props.ctx.phase === "dawn") {
+      let characters = [];
+
+      const swiperParams = {
+        grabCursor: true,
+        centeredSlides: true,
+        slidesPerView: 1.2,
+      };
+
+      let isWitch = this.props.G.playerState[this.props.playerID].isWitch;
+
+      let alivePlayers = this.props.G.alivePlayers;
+      let newAlivePlayers = [];
+      for (let player of alivePlayers) {
+        let foundGameMeta = this.props.gameMetadata.find((playerElement) => {
+          return `${playerElement.id}` === `${player}`;
+        });
+
+        newAlivePlayers.push({ id: player, gameMeta: foundGameMeta });
       }
-    })
-   return (
-   <div>
-     
-     <ThemeProvider theme={theme}>
-      <PlayerView G={this.props.G} ctx={this.props.ctx} playerID={this.props.playerID} turnStatus={"Dawn is taking place..."}/>
-     </ThemeProvider>
-   </div>)
+
+      if (isWitch && this.props.playerID === this.props.ctx.currentPlayer) {
+        return (
+          <div class="player-swiper-container">
+            <Swiper {...swiperParams}>
+              {newAlivePlayers.map((playerElement) => (
+                <div>
+                  <div className="other-player-swiper">
+                    <ViewOfOtherPlayer
+                      G={this.props.G}
+                      ctx={this.props.ctx}
+                      playerId={playerElement.id}
+                      playerMeta={playerElement.gameMeta}
+                      clickedPlayer={(playerId) => {
+                        this.dawnClickPlayer(playerId);
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </Swiper>
+          </div>
+        );
+      } else {
+        return <div>You shouldn't see this...</div>;
+      }
+    }
+
+    if (this.props.ctx.phase === "mainGame") {
+      if (
+        this.props.ctx.activePlayers &&
+        this.props.ctx.activePlayers[this.props.playerID]
+      ) {
+        let stage = this.props.ctx.activePlayers[this.props.playerID];
+        if (stage === "drawCards") {
+          return (
+            <Grid container spacing={0}>
+              <Grid item xs={12}>
+                <Button
+                  className={classes.playDrawButton}
+                  variant="contained"
+                  size="large"
+                  onClick={() => this.drawCard()}
+                >
+                  Draw card
+                </Button>
+              </Grid>
+            </Grid>
+          );
+        }
+        else if (stage === "playCards") {
+          return (
+              <PlayCard
+                G={this.props.G}
+                ctx={this.props.ctx}
+                playerID={this.props.playerID}
+                makeMove={(card, player, targetPlayer, selectedCards) => {
+                  this.playCard(card, player, targetPlayer, selectedCards);
+                }}
+              />
+          );
+        } else if (stage === "tryal") {
+          return (
+            <Tryal
+              G={this.props.G}
+              ctx={this.props.ctx}
+              playerID={this.props.playerID}
+              selectTryalCard={(cardIndex, player) => {
+                this.revealTryalCard(cardIndex, player);
+              }}
+            />
+          );
+        } else if (stage === "nightWitch") {
+          return (
+            <div>
+              <Night
+                G={this.props.G}
+                ctx={this.props.ctx}
+                playerID={this.props.playerID}
+                playerSelected={(selectedPlayer) =>
+                  this.witchSelectKill(selectedPlayer)
+                }
+              />
+            </div>
+          );
+        } else if (stage === "nightConstable") {
+          return (
+            <div>
+              <NightConstable
+                G={this.props.G}
+                ctx={this.props.ctx}
+                playerID={this.props.playerID}
+                playerSelected={(selectedPlayer) =>
+                  this.constableSelectSave(selectedPlayer)
+                }
+              />
+            </div>
+          );
+        } else if (stage === "nightTryal") {
+          return (
+            <div>
+              <NightTryal
+                G={this.props.G}
+                ctx={this.props.ctx}
+                playerID={this.props.playerID}
+                confession={(tryalCard) => {this.confession(tryalCard)}}
+              />
+            </div>
+          );
+        } else if (stage === "conspiracy") {
+          return (
+            <div>
+              <Conspiracy
+                G={this.props.G}
+                ctx={this.props.ctx}
+                playerID={this.props.playerID}
+                pickedTryal={(tryalCardIndex) => {this.pickedTryalCard(tryalCardIndex)}}
+              />
+            </div>
+          );
+        }
+
+      }
+      else {
+        return (
+          <Grid container spacing={0}>
+            <Grid item xs={12}>
+              <Button
+                className={classes.playDrawButton}
+                variant="contained"
+                size="large"
+                onClick={() => this.playCards()}
+              >
+                Play cards
+              </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                className={classes.playDrawButton}
+                variant="contained"
+                size="large"
+                onClick={() => this.drawCards()}
+              >
+                Draw cards
+              </Button>
+            </Grid>
+          </Grid>
+        );
+      }
+    }
+    
+
+
   }
 }
 
+export default withStyles(useStyles)(SalemBoard);
 
 /** if (this.props.ctx.phase === "dawn") {
       let characters = [];

@@ -9,7 +9,7 @@ export default class TryalCard extends React.Component {
           className="tryal-card tryal-card-revealed"
           onClick={(e) => this.props.onClick(this.props.card, e)}
         >
-          {this.props.card.id} {this.props.card.type}
+          {this.props.card.type}
         </button>
       );
     } else {

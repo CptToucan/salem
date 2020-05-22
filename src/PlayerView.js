@@ -5,11 +5,13 @@ import Button from "@material-ui/core/Button";
 import Drawer from "@material-ui/core/Drawer";
 import TryalView from "./TryalView";
 import OtherPlayerView from "./OtherPlayerView";
+import AppliedCardsView from "./AppliedCardsView";
 import CharacterView from "./CharacterView";
 import HandView from "./HandView";
 import ExpandLessIcon from "@material-ui/icons/ExpandLess";
 import { getPlayerState } from "./utils/player";
 import Backdrop from "@material-ui/core/Backdrop";
+import Dialog from "@material-ui/core/Dialog";
 
 const useStyles = (theme) => ({
   root: {
@@ -75,13 +77,22 @@ class PlayerView extends React.Component {
   toggleTryal(isOpen) {
     this.setState({ ...this.state, showingTryal: isOpen });
   }
-  render() {
+  toggleCharacter(isOpen) {
+    this.setState({ ...this.state, showingCharacter: isOpen });
+  }
+  toggleApplied(isOpen) {
+    this.setState({ ...this.state, showingApplied: isOpen });
+  }
+  toggleOthers(isOpen) {
+    this.setState({ ...this.state, showingOthers: isOpen });
+  }
+
+  renderDefaultPlayerView(bannerMessage) {
     const { classes } = this.props;
     let drawerAnchor = "bottom";
-
     return (
       <div className={classes.root}>
-        <div className="turn-status">{this.props.turnStatus}</div>
+        <div className="turn-status">{bannerMessage}</div>
         <Grid container className={classes.parentGrid} spacing={0}>
           <Grid item className={classes.grid} xs={12}></Grid>
           <Grid item className={classes.grid} xs={12}>
@@ -100,18 +111,51 @@ class PlayerView extends React.Component {
             </Button>
           </Grid>
           <Grid item className={classes.grid} xs={6}>
-            <Button className={classes.button} variant="contained" size="large">
+            <Button
+              className={classes.button}
+              variant="contained"
+              size="large"
+              onClick={() => {
+                this.toggleCharacter(true);
+              }}
+            >
               My Character
             </Button>
           </Grid>
           <Grid item className={classes.grid} xs={6}>
-            <Button className={classes.button} variant="contained" size="large">
+            <Button
+              className={classes.button}
+              variant="contained"
+              size="large"
+              onClick={() => {
+                this.toggleApplied(true);
+              }}
+            >
               Applied to Me
             </Button>
           </Grid>
+
           <Grid item className={classes.grid} xs={6}>
-            <Button className={classes.button} variant="contained" size="large">
+            <Button
+              className={classes.button}
+              variant="contained"
+              size="large"
+              onClick={() => {
+                this.toggleOthers(true);
+              }}
+            >
               View Players
+            </Button>
+          </Grid>
+          <Grid item className={classes.grid} xs={12}>
+            <Button
+              className={classes.button}
+              disabled={!this.props.isPlayerActive}
+              variant="contained"
+              size="large"
+              onClick={() => {this.props.clickedMakeMove()}}
+            >
+              Make a move
             </Button>
           </Grid>
 
@@ -120,9 +164,6 @@ class PlayerView extends React.Component {
             open={this.state[drawerAnchor]}
             onClose={() => {
               this.toggleDrawer(drawerAnchor, false);
-            }}
-            onOpen={() => {
-              this.toggleDrawer(drawerAnchor, true);
             }}
           >
             <HandView
@@ -162,12 +203,88 @@ class PlayerView extends React.Component {
             }
           />
         </Backdrop>
+        <Backdrop
+          className={classes.backdrop}
+          open={this.state.showingCharacter}
+          onClick={() => {
+            this.toggleCharacter(false);
+          }}
+        >
+          <CharacterView
+            playerState={getPlayerState(
+              this.props.G,
+              this.props.ctx,
+              this.props.playerID
+            )}
+          />
+        </Backdrop>
+        <Backdrop
+          className={classes.backdrop}
+          open={this.state.showingApplied}
+          onClick={() => {
+            this.toggleApplied(false);
+          }}
+        >
+          <AppliedCardsView
+            playerState={getPlayerState(
+              this.props.G,
+              this.props.ctx,
+              this.props.playerID
+            )}
+          />
+        </Backdrop>
+        <Backdrop
+          className={classes.backdrop}
+          open={this.state.showingOthers}
+          onClick={() => {
+            this.toggleOthers(false);
+          }}
+        >
+          <OtherPlayerView
+            G={this.props.G}
+            ctx={this.props.ctx}
+            ownPlayerId={this.props.playerID}
+            alivePlayers={this.props.G.alivePlayers}
+            allPlayerStates={this.props.G.playerState}
+            gameMeta={this.props.gameMetadata}
+          />
+        </Backdrop>
       </div>
     );
   }
+  render() {
+    let G = this.props.G;
+    let playerID = this.props.playerID;
+    let ctx = this.props.ctx;
+    let gameMeta = this.props.gameMetadata;
+    let contentToRender = null;
+
+    let isWitch = getPlayerState(G, ctx, playerID).isWitch;
+    let bannerMessage = "Dawn is taking place...";
+    if (this.props.ctx.phase === "dawn") {
+      if (isWitch) {
+        if (playerID === ctx.currentPlayer) {
+          bannerMessage = "It is your turn.";
+        } else {
+          bannerMessage = `${getPlayerState(
+            G,
+            ctx,
+            ctx.currentPlayer
+          )} is voting on who to give the blackcat`;
+        }
+      }
+    }
+
+    return <div>{this.renderDefaultPlayerView(bannerMessage)}</div>;
+  }
 }
 /**
- *           <SwipeableDrawer
+ *         
+ *      <Dialog fullScreen open={this.state.turnModal} onClose={()=> {}}>
+        Test
+      </Dialog>
+ * 
+ *   <SwipeableDrawer
       anchor={drawerAnchor}
       open={this.state[drawerAnchor]}
       onClose={() => {this.toggleDrawer(drawerAnchor, false)}}

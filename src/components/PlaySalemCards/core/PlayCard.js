@@ -56,50 +56,6 @@ export default class PlayCard extends React.Component {
     return playersToRender;
   }
 
-  renderOtherPlayersWithStatusCard(playerID) {
-    let playersToRender = [];
-    for (let playerId of this.props.G.alivePlayers) {
-      let character = this.props.G.playerState[playerId].character;
-
-      if(playerId !== playerID) {
-        let playerState = getPlayerState(this.props.G, this.props.ctx, playerId);
-        if(playerState.appliedRedCards.length > 0 || playerState.appliedBlueCards.length > 0 || playerState.appliedGreenCards.length > 0) {
-          playersToRender.push(
-            <Character
-              key={character}
-              character={character}
-              onClick={() => this.selectPlayer(playerId)}
-            />
-          );
-        }
-      }
-    }
-    return playersToRender;
-  }
-
-  renderOtherPlayersWithBlueStatusCard(playerID) {
-    let playersToRender = [];
-    for (let playerId of this.props.G.alivePlayers) {
-      let character = this.props.G.playerState[playerId].character;
-
-      if(playerId !== playerID) {
-        let playerState = getPlayerState(this.props.G, this.props.ctx, playerId);
-        if(playerState.appliedBlueCards.length > 0) {
-          playersToRender.push(
-            <Character
-              key={character}
-              character={character}
-              onClick={() => this.selectPlayer(playerId)}
-            />
-          );
-        }
-      }
-    }
-    return playersToRender;
-  }
-
-  
-
 
   render() {
     let selectedPlayer = this.state.selectedPlayer;

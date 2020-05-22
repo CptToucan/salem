@@ -2,49 +2,28 @@ import React from "react";
 import SalemCard from "./components/SalemCard";
 import Swiper from "react-id-swiper";
 
-export default class HandView extends React.Component {
+export default class CharacterView extends React.Component {
   render() {
-    let hand = this.props.hand;
+    let playerState = this.props.playerState;
+    let characterName = playerState.character;
 
-    const params = {
-      effect: "coverflow",
-      grabCursor: true,
-      centeredSlides: true,
-      slidesPerView: 2,
-      coverflowEffect: {
-        rotate: 50,
-        stretch: 0,
-        depth: 100,
-        modifier: 1,
-        slideShadows: true,
-      },
-    };
+    let witchMessage = <div>You are NOT a witch</div>;
 
+    if (playerState.isWitch) {
+      witchMessage = <div>You are a WITCH</div>;
+    }
+
+    let constableMessage = undefined;
+
+    if (playerState.isConstable) {
+      constableMessage = <div>You are the CONSTABLE</div>;
+    }
     return (
-      <div class="swiper-parent-container">
-        <Swiper {...params}>
-          {hand.map((card) => (
-            <div class="salem-card-swiper">
-              <SalemCard card={card} cardClicked={() => {}} />
-            </div>
-          ))}
-        </Swiper>
+      <div>
+        {characterName}
+        {witchMessage}
+        {constableMessage}
       </div>
     );
   }
 }
-
-/**
- *         {hand.map((card) => (
-          <SalemCard card={card} />
-        ))}
- */
-
-/**
-  *         {hand.map((card) => (
-          <SalemCard card={card} cardClicked={()=>{}}/>
-        ))}
-               {hand.map((card) => (
-          <SalemCard card={card} cardClicked={()=>{}} />
-        ))}
-  */

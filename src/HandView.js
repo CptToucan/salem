@@ -3,33 +3,32 @@ import SalemCard from "./components/SalemCard";
 import Swiper from "react-id-swiper";
 
 export default class HandView extends React.Component {
+  clickedCard(card) {
+    if(this.props.clickedCard) {
+      this.props.clickedCard(card);
+    }
+  }
   render() {
     let hand = this.props.hand;
 
     const params = {
-      effect: "coverflow",
       grabCursor: true,
       centeredSlides: true,
       slidesPerView: 2,
-      coverflowEffect: {
-        rotate: 50,
-        stretch: 0,
-        depth: 100,
-        modifier: 1,
-        slideShadows: true,
-      },
+      spaceBetween: 30
     };
 
     return (
-      <div class="swiper-parent-container">
+              <div class="swiper-parent-container">
         <Swiper {...params}>
           {hand.map((card) => (
             <div class="salem-card-swiper">
-              <SalemCard card={card} cardClicked={() => {}} />
+              <SalemCard card={card} cardClicked={(card) => {this.clickedCard(card)}} />
             </div>
           ))}
         </Swiper>
       </div>
+
     );
   }
 }

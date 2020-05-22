@@ -21,6 +21,8 @@ import PlayAccusation from "./PlaySalemCards/red/PlayAccusation";
 import PlayEvidence from "./PlaySalemCards/red/PlayEvidence";
 import PlayWitness from "./PlaySalemCards/red/PlayWitness";
 
+import HandView from "../HandView";
+
 export default class PlayCard extends React.Component {
   constructor(props) {
     super(props);
@@ -59,17 +61,8 @@ export default class PlayCard extends React.Component {
   renderCardsInHand(playerID) {
     let cardsInHand = this.props.G.playerState[playerID].hand;
     let cardsToRender = [];
-    for (let card of cardsInHand) {
-      /*
-      cardsToRender.push(
-        <Button onClick={() => this.selectCard(card)}>{card.title}</Button>
-      );
-      */
-     cardsToRender.push(
-       <SalemCard cardClicked={(cardClicked) => {this.selectCard(cardClicked)}} card={card}/>
-     )
-    }
-    return <div>{cardsToRender}</div>;
+    
+    return <HandView hand={cardsInHand} clickedCard={(cardClicked) => this.selectCard(cardClicked)}/>;
   }
 
   findPlayCardComponentForType(cardType) {
@@ -120,89 +113,6 @@ export default class PlayCard extends React.Component {
         />
       );
     }
-
-    /*
-    else if(selectedCard.type === "SCAPEGOAT" && selectedPlayer === null) {
-      return this.renderOtherPlayersWithStatusCard(this.props.playerID);
-    }
-    else if(selectedCard.type === "CURSE" && selectedPlayer === null) {
-      return this.renderOtherPlayersWithBlueStatusCard(this.props.playerID);
-    }
-    
-  
-    else if (selectedPlayer === null) {
-      return this.renderOtherPlayers(this.props.playerID);
-    }
-    
-    else if(selectedCard.type === "ALIBI" && selectedPlayer) {
-      return this.renderOtherPlayers(this.props.playerID, selectedPlayer);
-    }
-    
-    else if(selectedCard.type === "ROBBERY" && selectedPlayer) {
-      return this.renderOtherPlayers(this.props.playerID, selectedPlayer);
-    }
-
-    else if(selectedCard && selectedPlayer && selectedTargetPlayer) {
-      return (
-        <div>
-        Take cards using {selectedCard.title} from {selectedPlayer} and give to {selectedTargetPlayer}?
-        <Button onClick={() => this.confirmMove(selectedCard, selectedPlayer, selectedTargetPlayer)}>Confirm</Button><Button onClick={() => {this.cancelMove()}}>Cancel</Button>
-      </div>
-      )
-    }
-
-    else if(selectedCard && selectedPlayer && selectedTargetPlayer === null) {
-      return (
-        <div>
-          Play {selectedCard.title} on {selectedPlayer}?
-          <Button onClick={() => this.confirmMove(selectedCard, selectedPlayer)}>Confirm</Button><Button onClick={() => {this.cancelMove()}}>Cancel</Button>
-        </div>
-      );
-    }
-    */
   }
 }
 
-/**
- *     if (selectedCard === null) {
-      return this.renderCardsInHand(this.props.playerID);
-    }
-
-    else if(selectedCard.type === "SCAPEGOAT" && selectedPlayer === null) {
-      return this.renderOtherPlayersWithStatusCard(this.props.playerID);
-    }
-    else if(selectedCard.type === "CURSE" && selectedPlayer === null) {
-      return this.renderOtherPlayersWithBlueStatusCard(this.props.playerID);
-    }
-    
-  
-    else if (selectedPlayer === null) {
-      return this.renderOtherPlayers(this.props.playerID);
-    }
-    
-    else if(selectedCard.type === "ALIBI") {
-      return this.renderOtherPlayers(this.props.playerID, this.state.selectedPlayer);
-    }
-    
-    else if(selectedCard.type === "ROBBERY") {
-      return this.renderOtherPlayers(this.props.playerID, this.state.selectedPlayer);
-    }
-
-    else if(selectedCard && selectedPlayer && selectedTargetPlayer) {
-      return (
-        <div>
-        Take cards using {selectedCard.title} from {selectedPlayer} and give to {selectedTargetPlayer}?
-        <Button onClick={() => this.confirmMove(selectedCard, selectedPlayer, selectedTargetPlayer)}>Confirm</Button><Button onClick={() => {this.cancelMove()}}>Cancel</Button>
-      </div>
-      )
-    }
-
-    else if(selectedCard && selectedPlayer && selectedTargetPlayer === null) {
-      return (
-        <div>
-          Play {selectedCard.title} on {selectedPlayer}?
-          <Button onClick={() => this.confirmMove(selectedCard, selectedPlayer)}>Confirm</Button><Button onClick={() => {this.cancelMove()}}>Cancel</Button>
-        </div>
-      );
-    }
- */

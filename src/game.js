@@ -56,7 +56,7 @@ const CARDS_DEF = {
   Curse_GREEN: 1, // blue
   Matchmaker_BLUE: 2, // blue
   Asylum_BLUE: 1, // blue
-  Piety_BLUE: 35, // blue
+  Piety_BLUE: 1, // blue
 };
 
 const SETUPS = {

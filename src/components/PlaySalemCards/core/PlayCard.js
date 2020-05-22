@@ -1,12 +1,38 @@
 import React from "react";
 import Button from "@material-ui/core/Button";
 import Character from "../../Character";
-import { getPlayerState } from "../../../utils/player";
+import { getPlayerState, findMetadata } from "../../../utils/player";
+import Swiper from "react-id-swiper";
+import { ViewOfOtherPlayer } from "../../../OtherPlayerView";
+import { withStyles } from "@material-ui/core/styles";
+import Grid from "@material-ui/core/Grid";
 
-export default class PlayCard extends React.Component {
+const useStyles = (theme) => ({
+  confirmButton: {
+    width: "100%",
+    minHeight: "30vw",
+    marginBottom: "10px",
+    backgroundColor: "#f8c63c",
+    "&:active": {
+      backgroundColor: "#e9d08c",
+    },
+    "&:hover": {
+      backgroundColor: "#e9d08c",
+    },
+    "&:focus": {
+      backgroundColor: "#e9d08c",
+    },
+  },
+});
+
+class PlayCard extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { selectedPlayer: null, selectedTargetPlayer: null, selectedTargetCards: null };
+    this.state = {
+      selectedPlayer: null,
+      selectedTargetPlayer: null,
+      selectedTargetCards: null,
+    };
   }
 
   selectPlayer(player) {
@@ -17,226 +43,133 @@ export default class PlayCard extends React.Component {
 
   selectTargetPlayer(player) {
     this.setState({
-      selectedTargetPlayer: player
-    })
+      selectedTargetPlayer: player,
+    });
   }
 
   confirmOptions(selectedPlayer, selectedTargetPlayer, selectedTargetCards) {
-    this.props.selectedCardOptions(selectedPlayer, selectedTargetPlayer, selectedTargetCards);
+    this.props.selectedCardOptions(
+      selectedPlayer,
+      selectedTargetPlayer,
+      selectedTargetCards
+    );
     this.resetState();
   }
 
-  cancelOptions() {
-    this.resetState();
+cancelOptions() {
+  this.resetState();    
+  if (this.props.cancelMove) {
+    this.props.cancelMove();
+  }
   }
 
   resetState() {
     this.setState({
       selectedPlayer: null,
       selectedTargetPlayer: null,
-      selectedTargetCards: []
-    })
+      selectedTargetCards: [],
+    });
   }
 
   renderOtherPlayers(...playerIds) {
-    let playersToRender = [];
-    for (let playerId of this.props.G.alivePlayers) {
-      let character = getPlayerState(this.props.G, this.props.ctx, playerId).character;
-      let playerInList = playerIds.find(function(player) {return playerId === player})
+    const swiperParams = {
+      grabCursor: true,
+      centeredSlides: true,
+      slidesPerView: 1.2,
+    };
+
+    let alivePlayers = this.props.G.alivePlayers;
+    let newAlivePlayers = [];
+    for (let playerId of alivePlayers) {
+      let foundGameMeta = findMetadata(
+        this.props.G,
+        this.props.ctx,
+        this.props.gameMetadata
+      );
+
+      let playerInList = playerIds.find(function (player) {
+        return playerId === player;
+      });
+
       if (!playerInList) {
-        playersToRender.push(
-          <Character
-            key={character}
-            character={character}
-            onClick={() => this.selectPlayer(playerId)}
-          />
-        );
+        newAlivePlayers.push({ id: playerId, gameMeta: foundGameMeta });
       }
     }
-    return playersToRender;
-  }
 
+    return (
+      <div class="player-swiper-container">
+        <Swiper {...swiperParams}>
+          {newAlivePlayers.map((playerElement) => (
+            <div>
+              <div className="other-player-swiper">
+                <ViewOfOtherPlayer
+                  G={this.props.G}
+                  ctx={this.props.ctx}
+                  playerId={playerElement.id}
+                  playerMeta={playerElement.gameMeta}
+                  clickedPlayer={(playerId) => {
+                    this.selectPlayer(playerId);
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </Swiper>
+      </div>
+    );
+  }
 
   render() {
+    const { classes } = this.props;
     let selectedPlayer = this.state.selectedPlayer;
-    let selectedTargetPlayer = this.state.selectedTargetPlayer;
-    let selectedTargetCards = this.state.selectedTargetCards;
 
-    if(selectedPlayer === null) {
+    if (selectedPlayer === null) {
       return this.renderOtherPlayers(this.props.playerID);
-    }
-
-    else if(selectedPlayer) {
+    } else if (selectedPlayer) {
       return (
-        <div>
-          Play {this.props.cardTitle} on {selectedPlayer}?
-          <Button onClick={() => this.confirmOptions(selectedPlayer, null, null)}>Confirm</Button><Button onClick={() => {this.cancelOptions()}}>Cancel</Button>
-        </div>
+        <Grid container spacing={0}>
+          <Grid item xs={12}>
+            Play {this.props.cardTitle} on {" "}
+            {
+              getPlayerState(this.props.G, this.props.ctx, selectedPlayer)
+                .character
+            }{" "}
+            (
+            {
+              findMetadata(
+                this.props.G,
+                this.props.ctx,
+                this.props.gameMetadata,
+                selectedPlayer
+              ).name
+            }
+            )?
+          </Grid>
+
+          <Grid item xs={12}>
+            <Button
+              className={classes.confirmButton}
+              variant="contained"
+              size="large"
+              onClick={() => this.confirmOptions(selectedPlayer, null, null)}
+            >
+              Confirm
+            </Button>
+          </Grid>
+          <Grid item xs={12}>
+            <Button
+              className={classes.confirmButton}
+              variant="contained"
+              size="large"
+              onClick={() => this.cancelOptions()}
+            >
+              Cancel
+            </Button>
+          </Grid>
+        </Grid>
       );
     }
-
   }
-  
 }
 
-/*
-    constructor(props) {
-      super(props);
-      this.state = { selectedCard: null, selectedPlayer: null, selectedTargetPlayer: null };
-    }
-
-    selectCard(card) {
-      this.setState({
-        selectedCard: card,
-      });
-    }
-
-    selectPlayer(player) {
-      this.setState({
-        selectedPlayer: player,
-      });
-    }
-
-    selectedTargetPlayer(player) {
-      this.setState({
-        selectedTargetPlayer: player
-      })
-    }
-
-    confirmMove(selectedCard, selectedPlayer, selectedTargetPlayer) {
-      this.props.makeMove(selectedCard, selectedPlayer, selectedTargetPlayer);
-      this.resetState();
-    }
-
-    cancelMove() {
-      this.resetState();
-    }
-
-    resetState() {
-      this.setState({
-        selectedCard: null,
-        selectedPlayer: null,
-        selectedTargetPlayer: null
-      })
-    }
-
-    renderOtherPlayers(...playerIds) {
-      let playersToRender = [];
-      for (let playerId of this.props.G.alivePlayers) {
-        let character = getPlayerState(this.props.G, this.props.ctx, playerId).character;
-        let playerInList = playerIds.find(function(player) {return playerId === player})
-        if (!playerInList) {
-          playersToRender.push(
-            <Character
-              key={character}
-              character={character}
-              onClick={() => this.selectPlayer(playerId)}
-            />
-          );
-        }
-      }
-      return playersToRender;
-    }
-
-    renderOtherPlayersWithStatusCard(playerID) {
-      let playersToRender = [];
-      for (let playerId of this.props.G.alivePlayers) {
-        let character = this.props.G.playerState[playerId].character;
-
-        if(playerId !== playerID) {
-          let playerState = getPlayerState(this.props.G, this.props.ctx, playerId);
-          if(playerState.appliedRedCards.length > 0 || playerState.appliedBlueCards.length > 0 || playerState.appliedGreenCards.length > 0) {
-            playersToRender.push(
-              <Character
-                key={character}
-                character={character}
-                onClick={() => this.selectPlayerForTarget(playerId)}
-              />
-            );
-          }
-        }
-      }
-      return playersToRender;
-    }
-
-    renderOtherPlayersWithBlueStatusCard(playerID) {
-      let playersToRender = [];
-      for (let playerId of this.props.G.alivePlayers) {
-        let character = this.props.G.playerState[playerId].character;
-
-        if(playerId !== playerID) {
-          let playerState = getPlayerState(this.props.G, this.props.ctx, playerId);
-          if(playerState.appliedBlueCards.length > 0) {
-            playersToRender.push(
-              <Character
-                key={character}
-                character={character}
-                onClick={() => this.selectPlayerForTarget(playerId)}
-              />
-            );
-          }
-        }
-      }
-      return playersToRender;
-    }
-
-    renderCardsInHand(playerID) {
-      let cardsInHand = this.props.G.playerState[playerID].hand;
-      let cardsToRender = [];
-      for (let card of cardsInHand) {
-        cardsToRender.push(
-          <Button onClick={() => this.selectCard(card)}>{card.title}</Button>
-        );
-      }
-      return <div>{cardsToRender}</div>;
-    }
-
-    render() {
-      console.log(this.state.selectedCard);
-      let selectedCard = this.state.selectedCard;
-      let selectedPlayer = this.state.selectedPlayer;
-      let selectedTargetPlayer = this.state.selectedTargetPlayer;
-
-      if (selectedCard === null) {
-        return this.renderCardsInHand(this.props.playerID);
-      }
-
-      else if(selectedCard.type === "SCAPEGOAT" && selectedPlayer === null) {
-        return this.renderOtherPlayersWithStatusCard(this.props.playerID);
-      }
-      else if(selectedCard.type === "CURSE" && selectedPlayer === null) {
-        return this.renderOtherPlayersWithBlueStatusCard(this.props.playerID);
-      }
-      
-    
-      else if (selectedPlayer === null) {
-        return this.renderOtherPlayers(this.props.playerID);
-      }
-      
-      else if(selectedCard.type === "ALIBI") {
-        return this.renderOtherPlayers(this.props.playerID, this.state.selectedPlayer);
-      }
-      
-      else if(selectedCard.type === "ROBBERY") {
-        return this.renderOtherPlayers(this.props.playerID, this.state.selectedPlayer);
-      }
-
-      else if(selectedCard && selectedPlayer && selectedTargetPlayer) {
-        return (
-          <div>
-          Take cards using {selectedCard.title} from {selectedPlayer} and give to {selectedTargetPlayer}?
-          <Button onClick={() => this.confirmMove(selectedCard, selectedPlayer, selectedTargetPlayer)}>Confirm</Button><Button onClick={() => {this.cancelMove()}}>Cancel</Button>
-        </div>
-        )
-      }
-
-      else if(selectedCard && selectedPlayer && selectedTargetPlayer === null) {
-        return (
-          <div>
-            Play {selectedCard.title} on {selectedPlayer}?
-            <Button onClick={() => this.confirmMove(selectedCard, selectedPlayer)}>Confirm</Button><Button onClick={() => {this.cancelMove()}}>Cancel</Button>
-          </div>
-        );
-      }
-    }
-  */
+export default withStyles(useStyles)(PlayCard);

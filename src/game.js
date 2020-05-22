@@ -375,6 +375,7 @@ export const Salem = {
         },
         onBegin: (G, ctx) => {
           G.drawnCardsThisTurn = 0;
+          G.playedCardsThisTurn = 0;
 
           return G;
         },
@@ -505,6 +506,7 @@ export const Salem = {
                   targetPlayer,
                   selectedTargetCards
                 );
+                G.playedCardsThisTurn++;
 
                 let totalAccusations = calculateAccusationsOnPlayer(
                   G,

@@ -224,17 +224,29 @@ class SalemBoard extends React.Component {
               </Grid>
             </Grid>
           );
-        }
-        else if (stage === "playCards") {
+        } else if (stage === "playCards") {
           return (
+            <div class="real-swiper-container">
               <PlayCard
                 G={this.props.G}
                 ctx={this.props.ctx}
                 playerID={this.props.playerID}
+                gameMetadata={this.props.gameMetadata}
                 makeMove={(card, player, targetPlayer, selectedCards) => {
                   this.playCard(card, player, targetPlayer, selectedCards);
                 }}
               />
+              {this.props.G.playedCardsThisTurn > 0 && (
+                <Button
+                  className={classes.playDrawButton}
+                  variant="contained"
+                  size="large"
+                  onClick={() => this.props.events.endTurn()}
+                >
+                  End Turn
+                </Button>
+              )}
+            </div>
           );
         } else if (stage === "tryal") {
           return (
@@ -280,7 +292,9 @@ class SalemBoard extends React.Component {
                 G={this.props.G}
                 ctx={this.props.ctx}
                 playerID={this.props.playerID}
-                confession={(tryalCard) => {this.confession(tryalCard)}}
+                confession={(tryalCard) => {
+                  this.confession(tryalCard);
+                }}
               />
             </div>
           );
@@ -291,14 +305,15 @@ class SalemBoard extends React.Component {
                 G={this.props.G}
                 ctx={this.props.ctx}
                 playerID={this.props.playerID}
-                pickedTryal={(tryalCardIndex) => {this.pickedTryalCard(tryalCardIndex)}}
+                pickedTryal={(tryalCardIndex) => {
+                  this.pickedTryalCard(tryalCardIndex);
+                }}
               />
             </div>
           );
         }
-
       }
-      else {
+      else if (this.props.playerID === this.props.ctx.currentPlayer) {
         return (
           <Grid container spacing={0}>
             <Grid item xs={12}>
@@ -324,10 +339,16 @@ class SalemBoard extends React.Component {
           </Grid>
         );
       }
+
+      /*
+      else if(this.props.G.alivePlayers.includes(this.props.playerID)) {
+        return <div>{this.props.ctx.currentPlayer} is playing </div>;
+      }
+      else {
+        return (<div>You're dead... bad luck</div>)
+      }
+      */
     }
-    
-
-
   }
 }
 

@@ -60,8 +60,6 @@ export default class PlayCard extends React.Component {
 
   renderCardsInHand(playerID) {
     let cardsInHand = this.props.G.playerState[playerID].hand;
-    let cardsToRender = [];
-    
     return <HandView hand={cardsInHand} clickedCard={(cardClicked) => this.selectCard(cardClicked)}/>;
   }
 
@@ -98,6 +96,8 @@ export default class PlayCard extends React.Component {
           G={this.props.G}
           ctx={this.props.ctx}
           playerID={this.props.playerID}
+          gameMetadata={this.props.gameMetadata}
+          cancelMove={()=> {this.cancelMove()}}
           selectedCardOptions={(
             selectedPlayer,
             selectedTargetPlayer,

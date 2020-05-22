@@ -98,3 +98,11 @@ export function updatePlayerRoles(G, ctx) {
   }
 
 }
+
+export function findMetadata(G, ctx, metaData, playerId) {
+  let foundGameMeta = metaData.find((playerElement) => {
+    return `${playerElement.id}` === `${playerId}`;
+  });
+
+  return foundGameMeta;
+}

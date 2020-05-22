@@ -1,98 +1,206 @@
 import PlayCard from "../core/PlayCard";
 import React from "react";
-import { getPlayerState } from '../../../utils/player';
+import { getPlayerState, findMetadata } from "../../../utils/player";
+import Swiper from "react-id-swiper";
+import { ViewOfOtherPlayer } from "../../../OtherPlayerView";
+import { withStyles } from "@material-ui/core/styles";
+import Grid from "@material-ui/core/Grid";
 import Button from "@material-ui/core/Button";
 import Character from "../../Character";
 
-export default class PlayRobbery extends React.Component {
+const useStyles = (theme) => ({
+  confirmButton: {
+    width: "100%",
+    minHeight: "30vw",
+    marginBottom: "10px",
+    backgroundColor: "#f8c63c",
+    "&:active": {
+      backgroundColor: "#e9d08c",
+    },
+    "&:hover": {
+      backgroundColor: "#e9d08c",
+    },
+    "&:focus": {
+      backgroundColor: "#e9d08c",
+    },
+  },
+});
+
+class PlayRobbery extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { selectedPlayer: null, selectedTargetPlayer: null, selectedTargetCards: null };
+    this.state = {
+      selectedPlayer: null,
+      selectedTargetPlayer: null,
+      selectedTargetCards: null,
+    };
   }
 
   selectPlayer(player) {
-    if(this.state.selectedPlayer === null) {
+    if (this.state.selectedPlayer === null) {
       this.setState({
-        selectedPlayer: player
+        selectedPlayer: player,
+      });
+    } else {
+      this.setState({
+        selectedTargetPlayer: player,
       });
     }
-    else {
-      this.setState({
-        selectedTargetPlayer: player
-      })
-    }
-
   }
 
   confirmOptions(selectedPlayer, selectedTargetPlayer, selectedTargetCards) {
-    this.props.selectedCardOptions(selectedPlayer, selectedTargetPlayer, selectedTargetCards);
+    this.props.selectedCardOptions(
+      selectedPlayer,
+      selectedTargetPlayer,
+      selectedTargetCards
+    );
     this.resetState();
   }
 
   cancelOptions() {
     this.resetState();
+    if (this.props.cancelMove) {
+      this.props.cancelMove();
+    }
   }
 
   resetState() {
     this.setState({
       selectedPlayer: null,
       selectedTargetPlayer: null,
-      selectedTargetCards: []
-    })
+      selectedTargetCards: [],
+    });
   }
 
   renderOtherPlayers(...playerIds) {
-    let playersToRender = [];
-    for (let playerId of this.props.G.alivePlayers) {
-      let character = getPlayerState(this.props.G, this.props.ctx, playerId).character;
-      let playerInList = playerIds.find(function(player) {return playerId === player})
+    const swiperParams = {
+      grabCursor: true,
+      centeredSlides: true,
+      slidesPerView: 1.2,
+    };
+
+    let alivePlayers = this.props.G.alivePlayers;
+    let newAlivePlayers = [];
+    for (let playerId of alivePlayers) {
+      let foundGameMeta = findMetadata(
+        this.props.G,
+        this.props.ctx,
+        this.props.gameMetadata
+      );
+
+      let playerInList = playerIds.find(function (player) {
+        return playerId === player;
+      });
+
       if (!playerInList) {
-        playersToRender.push(
-          <Character
-            key={character}
-            character={character}
-            onClick={() => this.selectPlayer(playerId)}
-          />
-        );
+        newAlivePlayers.push({ id: playerId, gameMeta: foundGameMeta });
       }
     }
-    return playersToRender;
+
+    return (
+      <div class="player-swiper-container">
+        <Swiper {...swiperParams}>
+          {newAlivePlayers.map((playerElement) => (
+            <div>
+              <div className="other-player-swiper">
+                <ViewOfOtherPlayer
+                  G={this.props.G}
+                  ctx={this.props.ctx}
+                  playerId={playerElement.id}
+                  playerMeta={playerElement.gameMeta}
+                  clickedPlayer={(playerId) => {
+                    this.selectPlayer(playerId);
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </Swiper>
+      </div>
+    );
   }
 
-
-
   render() {
+    const { classes } = this.props;
     let selectedPlayer = this.state.selectedPlayer;
     let selectedTargetPlayer = this.state.selectedTargetPlayer;
 
-    if(selectedPlayer === null) {
+    if (selectedPlayer === null) {
       return (
         <div>
           Whose hand should you take?
           {this.renderOtherPlayers(this.props.playerID)}
         </div>
-      )
-
-      
-    }
-    else if(selectedTargetPlayer === null && selectedPlayer) {
+      );
+    } else if (selectedTargetPlayer === null && selectedPlayer) {
       return (
         <div>
           Who should you give the hand to?
           {this.renderOtherPlayers(this.props.playerID, selectedPlayer)}
         </div>
-      )
-      
-    }
-    else {
+      );
+    } else {
       return (
-        <div>
-          Give {selectedPlayer}'s hand to {selectedTargetPlayer}?
-          <Button onClick={() => this.confirmOptions(selectedPlayer, selectedTargetPlayer, null)}>Confirm</Button><Button onClick={() => {this.cancelOptions()}}>Cancel</Button>
-        </div>
+        <Grid container spacing={0}>
+          <Grid item xs={12}>
+            Give {" "}
+            {
+              getPlayerState(this.props.G, this.props.ctx, selectedPlayer)
+                .character
+            }{" "}
+            (
+            {
+              findMetadata(
+                this.props.G,
+                this.props.ctx,
+                this.props.gameMetadata,
+                selectedPlayer
+              ).name
+            }
+            )'s hand to{" "}
+            {
+              getPlayerState(this.props.G, this.props.ctx, selectedTargetPlayer)
+                .character
+            }{" "}
+            (
+            {
+              findMetadata(
+                this.props.G,
+                this.props.ctx,
+                this.props.gameMetadata,
+                selectedTargetPlayer
+              ).name
+            }
+            )?
+          </Grid>
+          <Grid item xs={12}>
+            <Button
+              className={classes.confirmButton}
+              variant="contained"
+              size="large"
+              onClick={() =>
+                this.confirmOptions(selectedPlayer, selectedTargetPlayer, null)
+              }
+            >
+              Confirm
+            </Button>
+          </Grid>
+          <Grid item xs={12}>
+            <Button
+              className={classes.confirmButton}
+              variant="contained"
+              size="large"
+              onClick={() => {
+                this.cancelOptions();
+              }}
+            >
+              Cancel
+            </Button>
+          </Grid>
+        </Grid>
       );
     }
-
-
   }
 }
+
+export default withStyles(useStyles)(PlayRobbery);

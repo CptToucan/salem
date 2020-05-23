@@ -9,7 +9,7 @@ server.run(8000);
 import { Server } from 'boardgame.io/server';
 import path from 'path';
 import serve from 'koa-static';
-import { Salem } from './game';
+import { Salem } from './src/game';
 
 const server = Server({ games: [Salem] });
 const PORT = process.env.PORT || 8000;

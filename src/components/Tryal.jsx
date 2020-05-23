@@ -10,7 +10,7 @@ import { withStyles, makeStyles } from "@material-ui/core/styles";
 import TryalView from "../TryalView";
 import TryalCard from "./TryalCard";
 
-const ACCUSATIONS_NEEDED_FOR_TRYAL = 1;
+const ACCUSATIONS_NEEDED_FOR_TRYAL = 7;
 
 export default class Tryal extends React.Component {
   constructor(props) {

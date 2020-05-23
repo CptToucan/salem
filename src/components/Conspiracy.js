@@ -2,11 +2,37 @@ import React from 'react';
 import { getPlayerState } from '../utils/player';
 import TryalCard from "./TryalCard";
 import Button from "@material-ui/core/Button";
+import Swiper from "react-id-swiper";
+
 export default class Conspiracy extends React.Component {
 
   selectTryalCard(cardIndex) {
     this.props.pickedTryal(cardIndex);
   }
+
+  renderTryalCards(tryalCards) {
+    const params = {
+      centeredSlides: true,
+      slidesPerView: 2
+    };
+
+    return (
+      <div className="swiper-parent-container">
+        <Swiper {...params}>
+          {tryalCards.map((card, index) => (
+            <div className="salem-card-swiper">
+              <TryalCard card={card} show={card.isRevealed} onClick={(card, event) => {
+                if(!card.isRevealed) {
+                  this.selectTryalCard(index);
+                }
+              }} />
+            </div>
+          ))}
+        </Swiper>
+      </div>
+    );
+  }
+
 
   renderNeighbourTryalCards() {
     let G = this.props.G;
@@ -34,6 +60,7 @@ export default class Conspiracy extends React.Component {
 
     let tryalCards = neighbourPlayerState.tryalCards;
 
+    return this.renderTryalCards(tryalCards);
     for(let i = 0; i < tryalCards.length; i++) {
       let tryalCard = tryalCards[i];
       if(tryalCard.isRevealed) {

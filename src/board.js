@@ -39,7 +39,11 @@ import {
   hasCardAgainst,
 } from "./utils/salem";
 import Backdrop from "@material-ui/core/Backdrop";
-import { getCurrentPlayerState, getPlayerState, findMetadata } from "./utils/player";
+import {
+  getCurrentPlayerState,
+  getPlayerState,
+  findMetadata,
+} from "./utils/player";
 import PlayerView from "./PlayerView";
 
 const useStyles = (theme) => ({
@@ -139,7 +143,10 @@ class SalemBoard extends React.Component {
               this.toggleTurnDisplay(true);
             }}
           />
-          <Backdrop className={classes.backdrop} open={this.state.turnDisplay && this.props.isActive}>
+          <Backdrop
+            className={classes.backdrop}
+            open={this.state.turnDisplay && this.props.isActive}
+          >
             {this.renderTurn()}
           </Backdrop>
         </ThemeProvider>
@@ -169,7 +176,12 @@ class SalemBoard extends React.Component {
       let alivePlayers = this.props.G.alivePlayers;
       let newAlivePlayers = [];
       for (let player of alivePlayers) {
-        let foundGameMeta = findMetadata(this.props.G, this.props.ctx, this.props.gameMetadata, player);
+        let foundGameMeta = findMetadata(
+          this.props.G,
+          this.props.ctx,
+          this.props.gameMetadata,
+          player
+        );
 
         newAlivePlayers.push({ id: player, gameMeta: foundGameMeta });
       }
@@ -259,46 +271,39 @@ class SalemBoard extends React.Component {
           );
         } else if (stage === "nightWitch") {
           return (
-            <div>
-              <Night
-                G={this.props.G}
-                ctx={this.props.ctx}
-                playerID={this.props.playerID}
-                playerSelected={(selectedPlayer) =>
-                  this.witchSelectKill(selectedPlayer)
-                }
-              />
-            </div>
+            <Night
+              G={this.props.G}
+              ctx={this.props.ctx}
+              playerID={this.props.playerID}
+              playerSelected={(selectedPlayer) =>
+                this.witchSelectKill(selectedPlayer)
+              }
+            />
           );
         } else if (stage === "nightConstable") {
           return (
-            <div>
-              <NightConstable
-                G={this.props.G}
-                ctx={this.props.ctx}
-                playerID={this.props.playerID}
-                playerSelected={(selectedPlayer) =>
-                  this.constableSelectSave(selectedPlayer)
-                }
-              />
-            </div>
+            <NightConstable
+              G={this.props.G}
+              ctx={this.props.ctx}
+              playerID={this.props.playerID}
+              playerSelected={(selectedPlayer) =>
+                this.constableSelectSave(selectedPlayer)
+              }
+            />
           );
         } else if (stage === "nightTryal") {
           return (
-            <div>
-              <NightTryal
-                G={this.props.G}
-                ctx={this.props.ctx}
-                playerID={this.props.playerID}
-                confession={(tryalCard) => {
-                  this.confession(tryalCard);
-                }}
-              />
-            </div>
+            <NightTryal
+              G={this.props.G}
+              ctx={this.props.ctx}
+              playerID={this.props.playerID}
+              confession={(tryalCard) => {
+                this.confession(tryalCard);
+              }}
+            />
           );
         } else if (stage === "conspiracy") {
           return (
-            <div>
               <Conspiracy
                 G={this.props.G}
                 ctx={this.props.ctx}
@@ -307,12 +312,14 @@ class SalemBoard extends React.Component {
                   this.pickedTryalCard(tryalCardIndex);
                 }}
               />
-            </div>
           );
         }
-      }
-      else if (this.props.playerID === this.props.ctx.currentPlayer) {
-        let playerState = getPlayerState(this.props.G, this.props.ctx, this.props.playerID);
+      } else if (this.props.playerID === this.props.ctx.currentPlayer) {
+        let playerState = getPlayerState(
+          this.props.G,
+          this.props.ctx,
+          this.props.playerID
+        );
         return (
           <Grid container spacing={0}>
             <Grid item xs={12}>

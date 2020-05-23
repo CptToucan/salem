@@ -241,12 +241,14 @@ export const Salem = {
     let nightCard = generateSalemCardType("Night_BLACK", 1);
 
     // Add conspiracy
-    salemDeck.push(...conspiracyCard);
+    //salemDeck.push(...conspiracyCard);
    
     salemDeck = ctx.random.Shuffle(salemDeck);
+    salemDeck.push(...conspiracyCard);
 
     //Add night to bottom
     salemDeck.unshift(...nightCard);
+    //salemDeck.push(...nightCard);
 
     return {
       nightVotes: {},

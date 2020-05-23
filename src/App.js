@@ -27,14 +27,16 @@ const App = () => (
 );
 */
 
+/*
 const SalemClient = Client({
   game: Salem,
   board: SalemBoard,
   multiplayer: Local(),
   numPlayers: 4
 })
+*/
 
-/*
+
 class App extends React.Component {
   state = { playerID: null };
 
@@ -53,11 +55,11 @@ class App extends React.Component {
 }
 
 render(<App />, document.getElementById("root"));
-*/
 
 
 
 
+/*
 const App = () => (
   <div>
     <SalemClient playerID="0" />
@@ -67,6 +69,7 @@ const App = () => (
 
   </div>
 );
+*/
 
 /*
     <SalemClient playerID="4" />

@@ -77,7 +77,7 @@ export function killPlayer(G, ctx, targetPlayer) {
   G.alivePlayers = newAlivePlayers;
 }
 
-export function updatePlayerRoles(G, ctx) {
+export function updatePlayerRoles(G, ctx, meta) {
 
   for(let player of ctx.playOrder) {
     let playerState = getPlayerState(G, ctx, player);

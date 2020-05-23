@@ -87,16 +87,41 @@ class PlayerView extends React.Component {
     this.setState({ ...this.state, showingOthers: isOpen });
   }
 
+  generateLogMessagesForTextArea() {
+    let logMessages = this.props.G.logMessages;
+    let logMessagesToShow = [];
+    let playerState = getPlayerState(this.props.G, this.props.ctx, this.props.playerID);
+    let isWitch = playerState.isWitch;
+
+    for(let message of logMessages) {
+      if(message.includes("WITCH:")) {
+        if(isWitch) {
+          logMessagesToShow.push(<div>{message}</div>);
+        }
+      }
+      else {
+        logMessagesToShow.push(<div>{message}</div>);
+      }
+
+    }
+
+    return logMessagesToShow;
+  }
+
   renderDefaultPlayerView(bannerMessage) {
     const { classes } = this.props;
     let drawerAnchor = "bottom";
+
+    let logMessages = this.generateLogMessagesForTextArea();
+
+
     return (
       <div className={classes.root}>
         <div className="turn-status">{bannerMessage}</div>
         <Grid container className={classes.parentGrid} spacing={0}>
           <Grid item className={classes.grid} xs={12}></Grid>
           <Grid item className={classes.grid} xs={12}>
-            <textarea className="log-messages" rows="10"></textarea>
+            <div className="log-messages" rows="10">{logMessages}</div>
           </Grid>
           <Grid item className={classes.grid} xs={6}>
             <Button

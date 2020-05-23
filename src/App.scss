@@ -223,21 +223,31 @@ div.open-salem-hand {
   justify-content: center;
 }
 
-textarea.log-messages {
+.log-messages {
   width: 100%;
   background-color: transparent;
   border: transparent;
   background-color: lighten($salem-background, 5%);
+  height: 20vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
 }
 
 #lobby-exit.buttons {
   position: fixed;
-  top: 0;
+  bottom: 0;
   right: 0;
 }
 
 #game-exit.buttons {
   position: fixed;
-  top: 20px;
+  bottom: 0;
+  left: 0;
+}
+
+.close-backdrop {
+  position: absolute;
+  top: 0;
   right: 0;
 }

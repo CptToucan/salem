@@ -13,7 +13,9 @@ import Night from "./components/Night";
 import NightConstable from "./components/NightConstable";
 import NightTryal from "./components/NightTryal";
 import Conspiracy from "./components/Conspiracy";
-
+import IconButton from "@material-ui/core/IconButton";
+import CloseIcon from "@material-ui/icons/Close";
+import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 /*
 import PlayAsylum from './blue/PlayAsylum';
 import PlayBlackCat from './blue/PlayBlackCat';
@@ -81,7 +83,7 @@ class SalemBoard extends React.Component {
     this.setState({ ...this.state, turnDisplay: isOpen });
   }
   dawnClickPlayer(playerId) {
-    this.props.moves.voteBlackCat(playerId);
+    this.props.moves.voteBlackCat(playerId, this.props.gameMetadata);
     this.props.events.endTurn();
   }
 
@@ -94,31 +96,41 @@ class SalemBoard extends React.Component {
   }
 
   drawCard() {
-    this.props.moves.drawCard();
+    this.props.moves.drawCard(this.props.gameMetadata);
   }
 
   playCard(card, playerId, targetPlayerId, selectedCards) {
-    this.props.moves.playCard(card, playerId, targetPlayerId, selectedCards);
+    this.props.moves.playCard(
+      card,
+      playerId,
+      targetPlayerId,
+      selectedCards,
+      this.props.gameMetadata
+    );
   }
 
   revealTryalCard(cardIndex, player) {
-    this.props.moves.selectTryalCard(cardIndex, player);
+    this.props.moves.selectTryalCard(
+      cardIndex,
+      player,
+      this.props.gameMetadata
+    );
   }
 
   witchSelectKill(player) {
-    this.props.moves.voteKill(player);
+    this.props.moves.voteKill(player, this.props.gameMetadata);
   }
 
   constableSelectSave(player) {
-    this.props.moves.savePlayer(player);
+    this.props.moves.savePlayer(player, this.props.gameMetadata);
   }
 
   confession(tryalCard) {
-    this.props.moves.confess(tryalCard);
+    this.props.moves.confess(tryalCard, this.props.gameMetadata);
   }
 
   pickedTryalCard(tryalCardIndex) {
-    this.props.moves.pickedTryalCard(tryalCardIndex);
+    this.props.moves.pickedTryalCard(tryalCardIndex, this.props.gameMetadata);
   }
 
   render() {
@@ -145,8 +157,14 @@ class SalemBoard extends React.Component {
           />
           <Backdrop
             className={classes.backdrop}
-            open={this.state.turnDisplay && this.props.isActive}
+            open={this.state.turnDisplay}
           >
+            <div class="close-backdrop">
+              <IconButton aria-label="close" size="large" onClick={()=>{this.toggleTurnDisplay(false)}}  >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            </div>
+
             {this.renderTurn()}
           </Backdrop>
         </ThemeProvider>
@@ -160,7 +178,6 @@ class SalemBoard extends React.Component {
 
   renderTurn() {
     const { classes } = this.props;
-    console.log(this.props.G, this.props.ctx);
 
     if (this.props.ctx.phase === "dawn") {
       let characters = [];
@@ -304,14 +321,14 @@ class SalemBoard extends React.Component {
           );
         } else if (stage === "conspiracy") {
           return (
-              <Conspiracy
-                G={this.props.G}
-                ctx={this.props.ctx}
-                playerID={this.props.playerID}
-                pickedTryal={(tryalCardIndex) => {
-                  this.pickedTryalCard(tryalCardIndex);
-                }}
-              />
+            <Conspiracy
+              G={this.props.G}
+              ctx={this.props.ctx}
+              playerID={this.props.playerID}
+              pickedTryal={(tryalCardIndex) => {
+                this.pickedTryalCard(tryalCardIndex);
+              }}
+            />
           );
         }
       } else if (this.props.playerID === this.props.ctx.currentPlayer) {

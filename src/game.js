@@ -14,7 +14,8 @@ import {
   isWitchRevealed,
   allTryalCardsRevealed,
   killPlayer,
-  updatePlayerRoles
+  updatePlayerRoles,
+  findMetadata,
 } from "./utils/player";
 import { revealTryalCard } from "./utils/tryal";
 
@@ -146,19 +147,16 @@ function initializePlayers(numPlayers) {
 }
 
 function drawCardFromDeck(G, ctx) {
-
-  if(G.salemDeck.length <= 0) {
+  if (G.salemDeck.length <= 0) {
     let newDeck = [];
     let nightCard = [];
 
-    for(let card of G.salemDiscard) {
-      if(card.type !== "NIGHT") {
+    for (let card of G.salemDiscard) {
+      if (card.type !== "NIGHT") {
         newDeck.push(card);
-      }
-      else {
+      } else {
         nightCard.push(card);
       }
-      
     }
 
     newDeck = ctx.random.Shuffle(newDeck);
@@ -166,8 +164,6 @@ function drawCardFromDeck(G, ctx) {
 
     G.salemDeck = newDeck;
   }
-
-
 
   let newSalemDeck = [...G.salemDeck];
   let playerState = getPlayerState(G, ctx, ctx.currentPlayer);
@@ -178,6 +174,35 @@ function drawCardFromDeck(G, ctx) {
   G.salemDeck = newSalemDeck;
 
   return cardToAssign;
+}
+
+function logMessage(G, ctx, message) {
+  let newLogMessages = [...G.logMessages];
+
+  newLogMessages.push(message);
+  G.logMessages = newLogMessages;
+}
+
+function logWitchMessage(G, ctx, message) {
+  logMessage(G, ctx, `WITCH: ${message}`);
+}
+
+function logPlayerMessage(G, ctx, message, playerId) {
+  logMessage(G, ctx, `${playerId}: ${message}`);
+}
+
+function getIdentifierString(G, ctx, gameMetadata, playerId) {
+  let identifierString = `${getPlayerState(G, ctx, playerId).character} (${
+    findMetadata(
+      G,
+
+      ctx,
+      gameMetadata,
+      playerId
+    ).name
+  })`;
+
+  return identifierString;
 }
 
 export const Salem = {
@@ -212,6 +237,8 @@ export const Salem = {
       playerState[player].character = characterDeck.pop();
     }
 
+    let logMessages = [];
+
     // Assign witch cards
     while (witchDeck.length > 0) {
       for (let player of alivePlayers) {
@@ -219,6 +246,9 @@ export const Salem = {
 
         if (cardToAdd.type === "WITCH") {
           playerState[player].isWitch = true;
+          logMessages.push(
+            `WITCH: ${playerState[player].character} is a witch!`
+          );
         }
 
         if (cardToAdd.type === "CONSTABLE") {
@@ -241,10 +271,9 @@ export const Salem = {
     let nightCard = generateSalemCardType("Night_BLACK", 1);
 
     // Add conspiracy
-    //salemDeck.push(...conspiracyCard);
-   
-    salemDeck = ctx.random.Shuffle(salemDeck);
     salemDeck.push(...conspiracyCard);
+
+    salemDeck = ctx.random.Shuffle(salemDeck);
 
     //Add night to bottom
     salemDeck.unshift(...nightCard);
@@ -258,6 +287,7 @@ export const Salem = {
       salemDeck,
       salemDiscard: [],
       alivePlayers,
+      logMessages: logMessages,
     };
   },
   moves: {
@@ -302,17 +332,42 @@ export const Salem = {
         }
         let blackCatCard = generateSalemCardType("Blackcat_BLUE", 1);
         playCardOnPlayer(G, ctx, blackCatCard[0], playerToAssignBlackCat);
+        logMessage(
+          G,
+          ctx,
+          `The witches have given ${getPlayerState(
+            G,
+            ctx,
+            playerToAssignBlackCat
+          ).character} the black cat!`
+        );
       },
       onBegin: (G, ctx) => {
         G.dawnVotes = {};
       },
       moves: {
-        voteBlackCat(G, ctx, playerId) {
+        voteBlackCat(G, ctx, playerId, meta) {
           if (G.dawnVotes[playerId] === undefined) {
             G.dawnVotes[playerId] = 1;
           } else {
             G.dawnVotes[playerId]++;
           }
+
+          logWitchMessage(
+            G,
+            ctx,
+            `${getIdentifierString(
+              G,
+              ctx,
+              meta,
+              playerId
+            )} was given a vote for the blackcat by ${getIdentifierString(
+              G,
+              ctx,
+              meta,
+              ctx.currentPlayer
+            )}!`
+          );
         },
       },
       start: true,
@@ -347,9 +402,9 @@ export const Salem = {
             let currentPlayer = ctx.currentPlayer;
 
             let foundIndex;
-            for(let i = 0; i< G.alivePlayers.length; i++) {
+            for (let i = 0; i < G.alivePlayers.length; i++) {
               let player = G.alivePlayers[i];
-              if(player === currentPlayer) {
+              if (player === currentPlayer) {
                 foundIndex = i;
               }
             }
@@ -360,22 +415,22 @@ export const Salem = {
             }
 
             let nextPlayerIndex;
-            for(let i = 0; i < ctx.playOrder.length; i++) {
+            for (let i = 0; i < ctx.playOrder.length; i++) {
               let playerId = ctx.playOrder[i];
-              if(playerId === nextPlayer) {
+              if (playerId === nextPlayer) {
                 nextPlayerIndex = i;
               }
             }
 
-            if(nextPlayerIndex === undefined) {
+            if (nextPlayerIndex === undefined) {
               throw new Error("Can't find next player");
             }
 
-            return nextPlayerIndex
-          }
+            return nextPlayerIndex;
+          },
         },
         onBegin: (G, ctx) => {
-          if(G.blackCatTryal !== true) {
+          if (G.blackCatTryal !== true) {
             G.drawnCardsThisTurn = 0;
             G.playedCardsThisTurn = 0;
           }
@@ -389,7 +444,6 @@ export const Salem = {
           }
 
           return shouldReturn;
-
         },
         onEnd: (G, ctx) => {
           removeCardTypeFromPlayer(G, ctx, "STOCKS", ctx.currentPlayer);
@@ -402,38 +456,33 @@ export const Salem = {
           if (!G.isNight && !G.isConspiracy) {
             let newHand = [];
             for (let card of hand) {
-              
               if (card.type === "CONSPIRACY") {
-                if(G.hasCheckedBlackCatForConspiracy === false) {
-                  for(let player of G.alivePlayers) {
-                    if(hasCardAgainst(G, ctx, "BLACKCAT", player)) {
+                if (G.hasCheckedBlackCatForConspiracy === false) {
+                  for (let player of G.alivePlayers) {
+                    if (hasCardAgainst(G, ctx, "BLACKCAT", player)) {
                       G.blackCatTryal = true;
                       G.hasCheckedBlackCatForConspiracy = true;
-                      ctx.events.setStage("tryal")
+                      ctx.events.setStage("tryal");
                       return;
                     }
                   }
                 }
 
+                let playersToTakeToConspiracy = {};
+                for (let player of G.alivePlayers) {
+                  playersToTakeToConspiracy[player] = "conspiracy";
+                }
 
+                removeCardFromPlayersHand(G, ctx, card, ctx.currentPlayer);
+                addCardToDiscardPile(G, ctx, card);
 
-                  let playersToTakeToConspiracy = {};
-                  for (let player of G.alivePlayers) {
-                    playersToTakeToConspiracy[player] = "conspiracy";
-                  }
-  
-                  removeCardFromPlayersHand(G, ctx, card, ctx.currentPlayer);
-                  addCardToDiscardPile(G, ctx, card);
-  
-                  ctx.events.setActivePlayers({
-                    value: playersToTakeToConspiracy,
-                    moveLimit: 1
-                  });
-  
-                  G.isConspiracy = true;
-                  G.hasCheckedBlackCatForConspiracy = false;
+                ctx.events.setActivePlayers({
+                  value: playersToTakeToConspiracy,
+                  moveLimit: 1,
+                });
 
-
+                G.isConspiracy = true;
+                G.hasCheckedBlackCatForConspiracy = false;
               } else if (card.type === "NIGHT") {
                 let playersToTakeToNight = {};
                 let constableToTakeToNight = {};
@@ -470,8 +519,7 @@ export const Salem = {
                 });
 
                 G.isNight = true;
-              }
-              else {
+              } else {
                 newHand.push(card);
               }
             }
@@ -481,9 +529,18 @@ export const Salem = {
         stages: {
           drawCards: {
             moves: {
-              drawCard(G, ctx) {
+              drawCard(G, ctx, meta) {
                 let cardDrawn = drawCardFromDeck(G, ctx);
-                console.log(cardDrawn);
+                logMessage(
+                  G,
+                  ctx,
+                  `${getIdentifierString(
+                    G,
+                    ctx,
+                    meta,
+                    ctx.currentPlayer
+                  )} has drawn a card...`
+                );
                 G.drawnCardsThisTurn++;
               },
             },
@@ -496,7 +553,8 @@ export const Salem = {
                 cardToPlay,
                 player,
                 targetPlayer,
-                selectedTargetCards
+                selectedTargetCards,
+                meta
               ) {
                 removeCardFromCurrentPlayer(G, ctx, cardToPlay);
                 playCardOnPlayer(
@@ -507,6 +565,22 @@ export const Salem = {
                   targetPlayer,
                   selectedTargetCards
                 );
+
+                logMessage(
+                  G,
+                  ctx,
+                  `${getIdentifierString(
+                    G,
+                    ctx,
+                    meta,
+                    ctx.currentPlayer
+                  )} has played a ${cardToPlay.type} on ${getIdentifierString(
+                    G,
+                    ctx,
+                    meta,
+                    player
+                  )}`
+                );
                 G.playedCardsThisTurn++;
 
                 let totalAccusations = calculateAccusationsOnPlayer(
@@ -515,37 +589,85 @@ export const Salem = {
                   player
                 );
                 if (totalAccusations >= ACCUSATIONS_NEEDED_FOR_TRYAL) {
+                  logMessage(
+                    G,
+                    ctx,
+                    `${getIdentifierString(
+                      G,
+                      ctx,
+                      meta,
+                      player
+                    )} has ${totalAccusations} accusations, it's time for a Tryal.`
+                  );
                   ctx.events.setStage("tryal");
+                }
+
+                if (targetPlayer) {
+                  let totalAccusationsOnTarget = calculateAccusationsOnPlayer(
+                    G,
+                    ctx,
+                    targetPlayer
+                  );
+
+                  if (
+                    totalAccusationsOnTarget >= ACCUSATIONS_NEEDED_FOR_TRYAL
+                  ) {
+                    logMessage(
+                      G,
+                      ctx,
+                      `${getIdentifierString(
+                        G,
+                        ctx,
+                        meta,
+                        targetPlayer
+                      )} has ${totalAccusations} accusations, it's time for a Tryal.`
+                    );
+                    ctx.events.setStage("tryal");
+                  }
                 }
               },
             },
           },
           tryal: {
             moves: {
-              selectTryalCard(G, ctx, tryalCardIndex, targetPlayer) {
+              selectTryalCard(G, ctx, tryalCardIndex, targetPlayer, meta) {
                 revealTryalCard(G, ctx, tryalCardIndex, targetPlayer);
 
-                if (
-                  isWitchRevealed(G, ctx, targetPlayer) ||
-                  allTryalCardsRevealed(G, ctx, targetPlayer)
-                ) {
+                logMessage(
+                  G,
+                  ctx,
+                  `${getIdentifierString(
+                    G,
+                    ctx,
+                    meta,
+                    ctx.currentPlayer
+                  )} revealed a tryal card of ${getIdentifierString(
+                    G,
+                    ctx,
+                    meta,
+                    targetPlayer
+                  )}`
+                );
+
+                if (isWitchRevealed(G, ctx, targetPlayer)) {
                   killPlayer(G, ctx, targetPlayer);
+                  logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, targetPlayer)} has been revealed as a witch!. They are now dead.`)
+                } else if (allTryalCardsRevealed(G, ctx, targetPlayer)) {
+                  killPlayer(G, ctx, targetPlayer);
+                  logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, targetPlayer)} had all their Tryal cards revealed!. They are now dead.`)
                 }
 
-                if(G.blackCatTryal === true) {
+                if (G.blackCatTryal === true) {
                   G.blackCatTryal = false;
-                  if(G.drawnCardsThisTurn === 2) {
-                    
+                  if (G.drawnCardsThisTurn === 2) {
                     ctx.events.endTurn();
-                  }
-                  else if(G.drawnCardsThisTurn === 1) {
+                  } else if (G.drawnCardsThisTurn === 1) {
                     ctx.events.setStage("drawCards");
                   }
-                  
-                }
-                else {
+                } else {
                   ctx.events.setStage("playCards");
                   removeCardColourFromPlayer(G, ctx, "RED", targetPlayer);
+                  logMessage(G, ctx, `Removing red cards applied to ${getIdentifierString(G, ctx, meta, targetPlayer)}`)
                 }
 
                 updatePlayerRoles(G, ctx);
@@ -555,97 +677,104 @@ export const Salem = {
 
           conspiracy: {
             moves: {
-              pickedTryalCard(G, ctx, cardIndex) {
-              
-                  let playerID = ctx.playerID;
-                  let alivePlayers = G.alivePlayers;
-              
-                  let foundIndex;
-              
-                  for(let i = 0; i < alivePlayers.length; i++) {
-                    if(playerID === alivePlayers[i]) {
-                      foundIndex = i;
-                      break;
-                    }
+              pickedTryalCard(G, ctx, cardIndex, meta) {
+                let playerID = ctx.playerID;
+                let alivePlayers = G.alivePlayers;
+
+                let foundIndex;
+
+                for (let i = 0; i < alivePlayers.length; i++) {
+                  if (playerID === alivePlayers[i]) {
+                    foundIndex = i;
+                    break;
                   }
-              
-                  let indexOfNeighbour = foundIndex + 1;
-                  if(indexOfNeighbour >= alivePlayers.length) {
-                    indexOfNeighbour = 0;
+                }
+
+                let indexOfNeighbour = foundIndex + 1;
+                if (indexOfNeighbour >= alivePlayers.length) {
+                  indexOfNeighbour = 0;
+                }
+
+                let neighbourId = alivePlayers[indexOfNeighbour];
+                let neighbourPlayerState = getPlayerState(G, ctx, neighbourId);
+                let playerState = getPlayerState(G, ctx, playerID);
+                let tryalCards = playerState.tryalCards;
+
+                let neighbourTryalCards = neighbourPlayerState.tryalCards;
+
+                //let newTryalCards = [...tryalCards];
+                let newNeighbourTryalCards = [];
+
+                for (let i = 0; i < neighbourTryalCards.length; i++) {
+                  if (i !== cardIndex) {
+                    newNeighbourTryalCards.push(neighbourTryalCards[i]);
+                  } else {
+                    playerState._pickedTryalCard = neighbourTryalCards[i];
                   }
-              
-                  let neighbourId = alivePlayers[indexOfNeighbour];
-                  let neighbourPlayerState = getPlayerState(G, ctx, neighbourId);
-                  let playerState = getPlayerState(G, ctx, playerID);
-                  let tryalCards = playerState.tryalCards;
+                }
 
-                  let neighbourTryalCards = neighbourPlayerState.tryalCards;
+                neighbourPlayerState.tryalCards = newNeighbourTryalCards;
 
-                  //let newTryalCards = [...tryalCards];
-                  let newNeighbourTryalCards = [];
-
-                  for(let i = 0; i < neighbourTryalCards.length; i++) {
-                    if(i !== cardIndex) {
-                      newNeighbourTryalCards.push(neighbourTryalCards[i]);
-                    }
-                    else {
-                      playerState._pickedTryalCard = neighbourTryalCards[i];
-                    }
-                  }
-
-                  neighbourPlayerState.tryalCards = newNeighbourTryalCards;
- 
-
-                  let isLastPersonToTakeCard = Object.keys(ctx.activePlayers).length === 1;
-                  if (isLastPersonToTakeCard) {
-                    for(let player of G.alivePlayers) {
-                      let alivePlayerState = getPlayerState(G, ctx, player);
-                      let newAlivePlayerTryalCards = [];
-                      for(let card of alivePlayerState.tryalCards) {
-                        if(card !== null) {
-                          newAlivePlayerTryalCards.push(card);
-                        }
+                let isLastPersonToTakeCard =
+                  Object.keys(ctx.activePlayers).length === 1;
+                if (isLastPersonToTakeCard) {
+                  for (let player of G.alivePlayers) {
+                    let alivePlayerState = getPlayerState(G, ctx, player);
+                    let newAlivePlayerTryalCards = [];
+                    for (let card of alivePlayerState.tryalCards) {
+                      if (card !== null) {
+                        newAlivePlayerTryalCards.push(card);
                       }
-                      newAlivePlayerTryalCards.push(alivePlayerState._pickedTryalCard);
-                      alivePlayerState._pickedTryalCard = null;
-                      alivePlayerState.tryalCards = ctx.random.Shuffle(newAlivePlayerTryalCards);
-
-                      
                     }
+                    newAlivePlayerTryalCards.push(
+                      alivePlayerState._pickedTryalCard
+                    );
 
-                    updatePlayerRoles(G, ctx);
-                    G.isConspiracy = false;
-
-                    if(G.drawnCardsThisTurn === 1) {
-                      ctx.events.setActivePlayers({value: {[ctx.currentPlayer]: "drawCards"}})
-                    }
+                    logPlayerMessage(G, ctx, `The Tryal Card you took was a ${alivePlayerState._pickedTryalCard.type} card!`)
+                    alivePlayerState._pickedTryalCard = null;
+                    alivePlayerState.tryalCards = ctx.random.Shuffle(
+                      newAlivePlayerTryalCards
+                    );
                   }
-              }
+
+                  updatePlayerRoles(G, ctx);
+                  G.isConspiracy = false;
+
+                  if (G.drawnCardsThisTurn === 1) {
+                    ctx.events.setActivePlayers({
+                      value: { [ctx.currentPlayer]: "drawCards" },
+                    });
+                  }
+                }
+              },
             },
           },
           nightWitch: {
             moves: {
-              voteKill(G, ctx, playerId) {
+              voteKill(G, ctx, playerId, meta) {
                 if (G.nightVotes[playerId] === undefined) {
                   G.nightVotes[playerId] = 1;
                 } else {
                   G.nightVotes[playerId]++;
                 }
+
+                logWitchMessage(G, ctx, `${getIdentifierString(G, ctx, meta, playerId)} received a vote to be killed`)
               },
             },
           },
 
           nightConstable: {
             moves: {
-              savePlayer(G, ctx, playerId) {
+              savePlayer(G, ctx, playerId, meta) {
                 G.nightSave = playerId;
+                logPlayerMessage(G, ctx, `As the constable you voted to save ${getIdentifierString(G, ctx, meta, playerId)}`)
               },
             },
           },
 
           nightTryal: {
             moves: {
-              confess(G, ctx, tryalCard) {
+              confess(G, ctx, tryalCard, meta) {
                 let playerWhoMoved = ctx.playerID;
                 let newPlayersConfessed = [...G.playersConfessed];
 
@@ -653,13 +782,16 @@ export const Salem = {
                   tryalCard.isRevealed = true;
                   newPlayersConfessed.push(playerWhoMoved);
                   G.playersConfessed = newPlayersConfessed;
+                  logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, ctx.currentPlayer)} confessed revealing a ${tryalCard.type} card`)
                 }
 
-                let isLastPersonToConfess = Object.keys(ctx.activePlayers).length === 1;
+                let isLastPersonToConfess =
+                  Object.keys(ctx.activePlayers).length === 1;
                 if (isLastPersonToConfess) {
                   let playersWithVotes = [];
                   for (let playerId in G.nightVotes) {
                     playersWithVotes.push(playerId);
+                    
                   }
 
                   let playerToKill;
@@ -674,27 +806,39 @@ export const Salem = {
                   }
 
                   let playerToSave = G.nightSave;
+                  logMessage(G, ctx, `The witches tried to kill ${getIdentifierString(G, ctx, meta, playerToKill)}`)
+                  logMessage(G, ctx, `The constable saved ${getIdentifierString(G, ctx, meta, playerToSave)}`)
+
+                  
 
                   // Kill player who hasnt been saved
 
-                  let playerDidConfess = G.playersConfessed.includes(playerToKill);
+                  let playerDidConfess = G.playersConfessed.includes(
+                    playerToKill
+                  );
 
-                  if (playerToSave !== playerToKill && !playerDidConfess && !hasCardAgainst(G, ctx, "ASYLUM", playerToKill)) {
+                  if (
+                    playerToSave !== playerToKill &&
+                    !playerDidConfess &&
+                    !hasCardAgainst(G, ctx, "ASYLUM", playerToKill)
+                  ) {
+                    logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, playerToKill)} did not confess, so they are now dead`)
                     killPlayer(G, ctx, playerToKill);
                   }
 
                   let playersToKill = [];
-                  for(let player of G.alivePlayers) {
-                    if (
-                      isWitchRevealed(G, ctx, playerWhoMoved) ||
-                      allTryalCardsRevealed(G, ctx, playerWhoMoved)
-                    ) {
+                  for (let player of G.alivePlayers) {
+                    if (isWitchRevealed(G, ctx, playerWhoMoved) ) {
                       playersToKill.push(player);
-                      
+                      logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, player)} revealed a witch card in confession, so they are now dead`)
+                    }
+                    else if(allTryalCardsRevealed(G, ctx, playerWhoMoved)) {
+                      logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, player)} revealed their last Tryal card, so they are now dead`)
+                      playersToKill.push(player);
                     }
                   }
 
-                  for(let player of playersToKill) {
+                  for (let player of playersToKill) {
                     killPlayer(G, ctx, player);
                   }
 
@@ -703,10 +847,11 @@ export const Salem = {
                   G.nightSave = null;
                   G.isNight = false;
 
-                  if(G.alivePlayers.includes(ctx.currentPlayer)) {
-                    ctx.events.setActivePlayers({value: {[ctx.currentPlayer]:"drawCards" }});
-                  }
-                  else {
+                  if (G.alivePlayers.includes(ctx.currentPlayer)) {
+                    ctx.events.setActivePlayers({
+                      value: { [ctx.currentPlayer]: "drawCards" },
+                    });
+                  } else {
                     G.drawnCardsThisTurn = 0;
                     ctx.events.endTurn();
                   }
@@ -719,4 +864,3 @@ export const Salem = {
     },
   },
 };
-

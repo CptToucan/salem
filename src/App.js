@@ -10,8 +10,8 @@ import { Local } from "boardgame.io/multiplayer";
 import { Salem } from "./game";
 import { SocketIO } from 'boardgame.io/multiplayer'
 
-//const server = `https://${window.location.hostname}`;
-const server = `http://192.168.0.51:8000`
+const server = `https://${window.location.hostname}`;
+//const server = `http://192.168.0.51:8000`
 const importedGames = [{ game: Salem, board: SalemBoard }];
 
 

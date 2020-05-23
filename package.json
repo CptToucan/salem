@@ -23,10 +23,14 @@
     "swiper": "^5.4.1"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "node -r esm src/server.js",
+    "dev": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "heroku-postbuild": "npm run build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": "react-app"

@@ -10,6 +10,9 @@ import { Local } from "boardgame.io/multiplayer";
 import { Salem } from "./game";
 import { SocketIO } from 'boardgame.io/multiplayer'
 
+const server = `https://${window.location.hostname}`;
+const importedGames = [{ game: Salem, board: SalemBoard }];
+
 
 
 /*
@@ -42,14 +45,20 @@ class App extends React.Component {
 
   
   render() {
-    let importedGames = [{game: Salem, board: SalemBoard}];
+    //let importedGames = [{game: Salem, board: SalemBoard}];
     return(
-    
+      <Lobby
+      gameServer={server}
+      lobbyServer={server}
+      gameComponents={importedGames}
+    />
+      /*
     <Lobby
       gameServer={`http://192.168.0.51:8000`}
       lobbyServer={`http://192.168.0.51:8000`}
       gameComponents={importedGames}
-    />)
+    />
+    */)
   }
   
 }

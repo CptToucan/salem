@@ -14,6 +14,7 @@
     "boardgame.io": "^0.39.9",
     "esm": "^3.2.25",
     "immutability-helper": "^3.0.2",
+    "koa-static": "^5.0.0",
     "node-sass": "^4.14.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",

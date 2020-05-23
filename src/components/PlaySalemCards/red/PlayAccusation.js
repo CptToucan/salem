@@ -86,7 +86,8 @@ class PlayAccusation extends React.Component {
       let foundGameMeta = findMetadata(
         this.props.G,
         this.props.ctx,
-        this.props.gameMetadata
+        this.props.gameMetadata,
+        playerId
       );
       let playerInList = playerIds.find(function (player) {
         return playerId === player;
@@ -107,6 +108,7 @@ class PlayAccusation extends React.Component {
             <div>
               <div className="other-player-swiper">
                 <ViewOfOtherPlayer
+                  ownPlayerId={this.props.playerID}
                   G={this.props.G}
                   ctx={this.props.ctx}
                   playerId={playerElement.id}

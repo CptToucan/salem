@@ -16,6 +16,7 @@ import Conspiracy from "./components/Conspiracy";
 import IconButton from "@material-ui/core/IconButton";
 import CloseIcon from "@material-ui/icons/Close";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
+
 /*
 import PlayAsylum from './blue/PlayAsylum';
 import PlayBlackCat from './blue/PlayBlackCat';
@@ -79,11 +80,14 @@ class SalemBoard extends React.Component {
     };
   }
 
+
+
   toggleTurnDisplay(isOpen) {
     this.setState({ ...this.state, turnDisplay: isOpen });
   }
   dawnClickPlayer(playerId) {
     this.props.moves.voteBlackCat(playerId, this.props.gameMetadata);
+    this.toggleTurnDisplay(false);
     this.props.events.endTurn();
   }
 
@@ -115,22 +119,27 @@ class SalemBoard extends React.Component {
       player,
       this.props.gameMetadata
     );
+    this.toggleTurnDisplay(false);
   }
 
   witchSelectKill(player) {
     this.props.moves.voteKill(player, this.props.gameMetadata);
+    this.toggleTurnDisplay(false);
   }
 
   constableSelectSave(player) {
     this.props.moves.savePlayer(player, this.props.gameMetadata);
+    this.toggleTurnDisplay(false);
   }
 
   confession(tryalCard) {
     this.props.moves.confess(tryalCard, this.props.gameMetadata);
+    this.toggleTurnDisplay(false);
   }
 
   pickedTryalCard(tryalCardIndex) {
     this.props.moves.pickedTryalCard(tryalCardIndex, this.props.gameMetadata);
+    this.toggleTurnDisplay(false);
   }
 
   render() {
@@ -142,10 +151,8 @@ class SalemBoard extends React.Component {
 
     const { classes } = this.props;
 
-    if(this.props?.ctx?.gameover) {
-      return <div>
-        {this.props.ctx.gameover.winner} win!
-      </div>
+    if (this.props?.ctx?.gameover) {
+      return <div>{this.props.ctx.gameover.winner} win!</div>;
     }
 
     return (
@@ -162,12 +169,15 @@ class SalemBoard extends React.Component {
               this.toggleTurnDisplay(true);
             }}
           />
-          <Backdrop
-            className={classes.backdrop}
-            open={this.state.turnDisplay}
-          >
+          <Backdrop className={classes.backdrop} open={this.state.turnDisplay}>
             <div class="close-backdrop">
-              <IconButton aria-label="close" size="large" onClick={()=>{this.toggleTurnDisplay(false)}}  >
+              <IconButton
+                aria-label="close"
+                size="large"
+                onClick={() => {
+                  this.toggleTurnDisplay(false);
+                }}
+              >
                 <CloseIcon fontSize="inherit" />
               </IconButton>
             </div>
@@ -218,6 +228,7 @@ class SalemBoard extends React.Component {
                 <div>
                   <div className="other-player-swiper">
                     <ViewOfOtherPlayer
+                      ownPlayerId={this.props.playerID}
                       G={this.props.G}
                       ctx={this.props.ctx}
                       playerId={playerElement.id}
@@ -344,35 +355,39 @@ class SalemBoard extends React.Component {
           this.props.ctx,
           this.props.playerID
         );
-        return (
-          <Grid container spacing={0}>
-            <Grid item xs={12}>
-              <Button
-                className={classes.playDrawButton}
-                variant="contained"
-                disabled={playerState.hand.length <= 0}
-                size="large"
-                onClick={() => this.playCards()}
-              >
-                Play cards
-              </Button>
+
+        if (this.props.G.isConspiracy || this.props.G.blackCatTryal) {
+          return <div>Your turn will start when the conspiracy is over!</div>;
+        } else {
+          return (
+            <Grid container spacing={0}>
+              <Grid item xs={12}>
+                <Button
+                  className={classes.playDrawButton}
+                  variant="contained"
+                  disabled={playerState.hand.length <= 0}
+                  size="large"
+                  onClick={() => this.playCards()}
+                >
+                  Play cards
+                </Button>
+              </Grid>
+              <Grid item xs={12}>
+                <Button
+                  className={classes.playDrawButton}
+                  variant="contained"
+                  size="large"
+                  onClick={() => this.drawCards()}
+                >
+                  Draw cards
+                </Button>
+              </Grid>
             </Grid>
-            <Grid item xs={12}>
-              <Button
-                className={classes.playDrawButton}
-                variant="contained"
-                size="large"
-                onClick={() => this.drawCards()}
-              >
-                Draw cards
-              </Button>
-            </Grid>
-          </Grid>
-        );
+          );
+        }
       }
     }
   }
 }
 
 export default withStyles(useStyles)(SalemBoard);
-

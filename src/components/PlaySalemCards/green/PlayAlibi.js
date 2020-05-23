@@ -124,6 +124,7 @@ class PlayAlibi extends React.Component {
             <div>
               <div className="other-player-swiper">
                 <ViewOfOtherPlayer
+                  ownPlayerId={this.props.playerID}
                   G={this.props.G}
                   ctx={this.props.ctx}
                   playerId={playerElement.id}
@@ -190,7 +191,6 @@ class PlayAlibi extends React.Component {
     const { classes } = this.props;
     let selectedPlayer = this.state.selectedPlayer;
     let selectedTargetCards = this.state.selectedTargetCards;
-    console.log(selectedTargetCards);
     if (selectedPlayer === null) {
       return this.renderOtherPlayersWithAccusationCard(this.props.playerID);
     } else if (selectedPlayer && selectedTargetCards.length <= 0) {

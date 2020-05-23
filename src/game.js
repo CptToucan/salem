@@ -188,10 +188,10 @@ function logWitchMessage(G, ctx, message) {
 }
 
 function logPlayerMessage(G, ctx, message, playerId) {
-  logMessage(G, ctx, `${playerId}: ${message}`);
+  logMessage(G, ctx, `PRIVATE_${playerId}: ${message}`);
 }
 
-function getIdentifierString(G, ctx, gameMetadata, playerId) {
+export function getIdentifierString(G, ctx, gameMetadata, playerId) {
   let identifierString = `${getPlayerState(G, ctx, playerId).character} (${
     findMetadata(
       G,
@@ -496,22 +496,7 @@ export const Salem = {
                     }
                   }
                 }
-
-                let playersToTakeToConspiracy = {};
-                for (let player of G.alivePlayers) {
-                  playersToTakeToConspiracy[player] = "conspiracy";
-                }
-
-                removeCardFromPlayersHand(G, ctx, card, ctx.currentPlayer);
-                addCardToDiscardPile(G, ctx, card);
-
-                ctx.events.setActivePlayers({
-                  value: playersToTakeToConspiracy,
-                  moveLimit: 1,
-                });
-
-                G.isConspiracy = true;
-                G.hasCheckedBlackCatForConspiracy = false;
+                setConspiracy(G, ctx, card);
               } else if (card.type === "NIGHT") {
                 let foundConstable = false;
                 let playersToTakeToNight = {};
@@ -537,6 +522,12 @@ export const Salem = {
 
                 removeCardFromPlayersHand(G, ctx, card, ctx.currentPlayer);
                 addCardToDiscardPile(G, ctx, card, ctx.currentPlayer);
+
+                logMessage(
+                  G,
+                  ctx,
+                  "The night card was drawn so it's night time!"
+                );
 
                 if (foundConstable) {
                   ctx.events.setActivePlayers({
@@ -581,7 +572,9 @@ export const Salem = {
                     meta,
                     ctx.currentPlayer
                   )} has drawn a card...`
+
                 );
+                logPlayerMessage(G, ctx, `You drew a ${cardDrawn.type}`, ctx.currentPlayer);
                 G.drawnCardsThisTurn++;
               },
             },
@@ -610,17 +603,7 @@ export const Salem = {
                 logMessage(
                   G,
                   ctx,
-                  `${getIdentifierString(
-                    G,
-                    ctx,
-                    meta,
-                    ctx.currentPlayer
-                  )} has played a ${cardToPlay.type} on ${getIdentifierString(
-                    G,
-                    ctx,
-                    meta,
-                    player
-                  )}`
+                  generatePlayCardMessage(G, ctx, cardToPlay, player, targetPlayer, selectedTargetCards, meta)
                 );
                 G.playedCardsThisTurn++;
 
@@ -681,7 +664,7 @@ export const Salem = {
                     G,
                     ctx,
                     meta,
-                    ctx.currentPlayer
+                    ctx.playerID
                   )} revealed a tryal card of ${getIdentifierString(
                     G,
                     ctx,
@@ -714,15 +697,26 @@ export const Salem = {
                       targetPlayer
                     )} had all their Tryal cards revealed!. They are now dead.`
                   );
+                } else {
+                  logMessage(
+                    G,
+                    ctx,
+                    `The tryal card was a NOT card. They're safe, for now.`
+                  );
                 }
 
                 if (G.blackCatTryal === true) {
                   G.blackCatTryal = false;
-                  if (G.drawnCardsThisTurn === 2) {
-                    ctx.events.endTurn();
-                  } else if (G.drawnCardsThisTurn === 1) {
-                    ctx.events.setStage("drawCards");
+
+                  let conspiracyCard = null;
+                  let hand = getPlayerState(G, ctx, ctx.playerID).hand;
+                  for (let card of hand) {
+                    if (card.type === "CONSPIRACY") {
+                      conspiracyCard = card;
+                    }
                   }
+
+                  setConspiracy(G, ctx, conspiracyCard);
                 } else {
                   ctx.events.setStage("playCards");
                   removeCardColourFromPlayer(G, ctx, "RED", targetPlayer);
@@ -801,7 +795,8 @@ export const Salem = {
                     logPlayerMessage(
                       G,
                       ctx,
-                      `The Tryal Card you took was a ${alivePlayerState._pickedTryalCard.type} card!`
+                      `The Tryal Card you took was a ${alivePlayerState._pickedTryalCard.type} card!`,
+                      player
                     );
                     alivePlayerState._pickedTryalCard = null;
                     alivePlayerState.tryalCards = ctx.random.Shuffle(
@@ -856,7 +851,8 @@ export const Salem = {
                     ctx,
                     meta,
                     playerId
-                  )}`
+                  )}`,
+                  ctx.playerID
                 );
               },
             },
@@ -879,7 +875,7 @@ export const Salem = {
                       G,
                       ctx,
                       meta,
-                      ctx.currentPlayer
+                      ctx.playerID
                     )} confessed revealing a ${tryalCard.type} card`
                   );
                 }
@@ -1015,3 +1011,61 @@ export const Salem = {
     }
   },
 };
+
+function setConspiracy(G, ctx, conspiracyCard) {
+  logMessage(G, ctx, "The conspiracy card was drawn so it's a conspiracy!");
+  let playersToTakeToConspiracy = {};
+  for (let player of G.alivePlayers) {
+    playersToTakeToConspiracy[player] = "conspiracy";
+  }
+
+  removeCardFromPlayersHand(G, ctx, conspiracyCard, ctx.currentPlayer);
+  addCardToDiscardPile(G, ctx, conspiracyCard);
+
+  ctx.events.setActivePlayers({
+    value: playersToTakeToConspiracy,
+    moveLimit: 1,
+  });
+
+  G.isConspiracy = true;
+  G.hasCheckedBlackCatForConspiracy = false;
+}
+
+function generatePlayCardMessage(
+  G, ctx,
+  cardToPlay,
+  player,
+  targetPlayer,
+  selectedTargetCards,
+  meta
+) {
+  let message = "";
+
+  try {
+    let playerString = getIdentifierString(G, ctx, meta, ctx.currentPlayer);
+    let idString = getIdentifierString(G, ctx, meta, player);
+    if(cardToPlay.type === "SCAPEGOAT") {
+      message = `${playerString} used SCAPEGOAT to take ${idString} and give them to ${getIdentifierString(G, ctx, meta, targetPlayer)}`
+    }
+    else if(cardToPlay.type === "CURSE") {
+      message = `${playerString} used CURSE to take a blue card from ${idString} and give it to ${getIdentifierString(G, ctx, meta, targetPlayer)}`
+    }
+    else if(cardToPlay.type === "ROBBERY") {
+      message = `${playerString} used ROBBERY to take the hand from ${idString} and give it to ${getIdentifierString(G, ctx, meta, targetPlayer)}`
+    }
+    else if(cardToPlay.type === "ARSON") {
+      message = `${playerString} used ARSON to discard the hand of ${idString}`;
+    }
+    else if(cardToPlay.type === "ALIBI") {
+      message = `${playerString} used ALIBI to discard ${selectedTargetCards.length} of ${idString}`
+    }
+    else {
+      message = `${playerString} played ${cardToPlay.type} on ${getIdentifierString(G, ctx, meta, player)}`;
+    }
+  } catch (err) {
+    console.error(err);
+    message = `Played ${cardToPlay.type}`;
+  }
+
+  return message;
+}

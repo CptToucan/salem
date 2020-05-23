@@ -30,31 +30,34 @@ export default class NightConstable extends React.Component {
         player
       );
 
-      if(player !== this.props.playerID) {
+      if (player !== this.props.playerID) {
         newAlivePlayers.push({ id: player, gameMeta: foundGameMeta });
       }
-      
     }
 
     return (
-      <div class="player-swiper-container">
-        <Swiper {...swiperParams}>
-          {newAlivePlayers.map((playerElement) => (
-            <div>
-              <div className="other-player-swiper">
-                <ViewOfOtherPlayer
-                  G={this.props.G}
-                  ctx={this.props.ctx}
-                  playerId={playerElement.id}
-                  playerMeta={playerElement.gameMeta}
-                  clickedPlayer={(playerId) => {
-                    this.selectedPlayer(playerId);
-                  }}
-                />
+      <div class="view-width">
+        Select a player to save...
+        <div class="player-swiper-container">
+          <Swiper {...swiperParams}>
+            {newAlivePlayers.map((playerElement) => (
+              <div>
+                <div className="other-player-swiper">
+                  <ViewOfOtherPlayer
+                    ownPlayerId={this.props.playerID}
+                    G={this.props.G}
+                    ctx={this.props.ctx}
+                    playerId={playerElement.id}
+                    playerMeta={playerElement.gameMeta}
+                    clickedPlayer={(playerId) => {
+                      this.selectedPlayer(playerId);
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
-        </Swiper>
+            ))}
+          </Swiper>
+        </div>
       </div>
     );
   }

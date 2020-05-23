@@ -34,12 +34,15 @@ export default class Night extends React.Component {
     }
 
     return (
-      <div class="player-swiper-container">
+      <div class="view-width">
+        Select a player to kill...
+        <div class="player-swiper-container">
         <Swiper {...swiperParams}>
           {newAlivePlayers.map((playerElement) => (
             <div>
               <div className="other-player-swiper">
                 <ViewOfOtherPlayer
+                  ownPlayerId={this.props.playerID}
                   G={this.props.G}
                   ctx={this.props.ctx}
                   playerId={playerElement.id}
@@ -53,6 +56,8 @@ export default class Night extends React.Component {
           ))}
         </Swiper>
       </div>
+      </div>
+      
     );
   }
 }

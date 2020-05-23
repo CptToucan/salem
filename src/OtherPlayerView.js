@@ -40,6 +40,7 @@ export default class OtherPlayer extends React.Component {
             <div>
               <div className="other-player-swiper">
                 <ViewOfOtherPlayer
+                  ownPlayerId={this.props.ownPlayerId}
                   G={this.props.G}
                   ctx={this.props.ctx}
                   playerId={playerElement.id}
@@ -84,6 +85,16 @@ export class ViewOfOtherPlayer extends React.Component {
         <div>{type}: {cardCount[type]}</div>
       )
     }
+
+
+    let witchInfo;
+
+    if(getPlayerState(this.props.G, this.props.ctx, this.props.ownPlayerId).isWitch) {
+      if(playerState.isWitch) {
+        witchInfo = "WITCH"
+      }
+    }
+
     let playerName = this.props?.playerMeta?.name
     return (
       <button className="other-player-details" onClick={() => {this.clickedPlayer(this.props.playerId)}}>
@@ -95,7 +106,9 @@ export class ViewOfOtherPlayer extends React.Component {
         </div>
         
         <Character character={playerState.character} />
-
+        <div class="witch-info">
+          {witchInfo}
+        </div>
         <div class="applied-salem-cards">
           {appliedCardsToRender}
         </div>

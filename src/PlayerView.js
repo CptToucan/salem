@@ -12,6 +12,8 @@ import ExpandLessIcon from "@material-ui/icons/ExpandLess";
 import { getPlayerState } from "./utils/player";
 import Backdrop from "@material-ui/core/Backdrop";
 import Dialog from "@material-ui/core/Dialog";
+import { getIdentifierString } from "./game";
+import { animateScroll } from "react-scroll";
 
 const useStyles = (theme) => ({
   root: {
@@ -71,6 +73,18 @@ class PlayerView extends React.Component {
     };
   }
 
+  componentDidMount() {
+    this.scrollToBottom();
+  }
+  componentDidUpdate() {
+    this.scrollToBottom();
+  }
+  scrollToBottom() {
+    animateScroll.scrollToBottom({
+      containerId: "log-messages",
+    });
+  }
+
   toggleDrawer(anchor, isOpen) {
     this.setState({ ...this.state, [anchor]: isOpen });
   }
@@ -98,13 +112,25 @@ class PlayerView extends React.Component {
     let isWitch = playerState.isWitch;
 
     for (let message of logMessages) {
+      let shouldShow = false
       if (message.includes("WITCH:")) {
         if (isWitch) {
+          shouldShow = true;
           logMessagesToShow.push(<div>{message}</div>);
         }
-      } else {
+      }
+      else if(message.includes(`${this.props.playerID}:`)) {
+        shouldShow = true;
+      }
+      else if(!message.includes("PRIVATE_")) {
+        shouldShow = true;
+      }
+
+      if(shouldShow) {
         logMessagesToShow.push(<div>{message}</div>);
       }
+      
+    
     }
 
     return logMessagesToShow;
@@ -123,7 +149,7 @@ class PlayerView extends React.Component {
         <Grid container className={classes.parentGrid} spacing={0}>
           <Grid item className={classes.grid} xs={12}></Grid>
           <Grid item className={classes.grid} xs={12}>
-            <div className="log-messages" rows="10">
+            <div id="log-messages" className="log-messages" rows="10">
               {logMessages}
             </div>
           </Grid>
@@ -305,19 +331,40 @@ class PlayerView extends React.Component {
     let contentToRender = null;
 
     let isWitch = getPlayerState(G, ctx, playerID).isWitch;
-    let bannerMessage = "Dawn is taking place...";
+    let bannerMessage;
     if (this.props.ctx.phase === "dawn") {
-      if (isWitch) {
-        if (playerID === ctx.currentPlayer) {
-          bannerMessage = "It is your turn.";
-        } else {
-          bannerMessage = `${getPlayerState(
-            G,
-            ctx,
-            ctx.currentPlayer
-          )} is voting on who to give the blackcat`;
-        }
+      bannerMessage = "Dawn is taking place...";
+    }
+    else if (this.props.ctx.phase === "mainGame") {
+
+      if(G.isNight) {
+        bannerMessage = "Night time..."
       }
+      else if(G.isConspiracy) {
+        bannerMessage = "Conspiracy..."
+      }
+      else {
+        let foundIndex;
+        let alivePlayers = G.alivePlayers;
+        
+        for(let i = 0; i < alivePlayers.length; i++) {
+          if(ctx.currentPlayer === alivePlayers[i]) {
+            foundIndex = i;
+            break;
+          }
+        }
+    
+        let indexOfNeighbour = foundIndex + 1;
+        if(indexOfNeighbour >= alivePlayers.length) {
+          indexOfNeighbour = 0;
+        }
+        let nextPlayerId = alivePlayers[indexOfNeighbour];
+  
+        bannerMessage = `CURRENT: ${getIdentifierString(G, ctx, gameMeta, ctx.currentPlayer)} NEXT: ${getIdentifierString(G, ctx, gameMeta, nextPlayerId)}`
+      }
+      
+
+
     }
 
     return <div>{this.renderDefaultPlayerView(bannerMessage)}</div>;

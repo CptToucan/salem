@@ -104,6 +104,7 @@ class PlayRobbery extends React.Component {
             <div>
               <div className="other-player-swiper">
                 <ViewOfOtherPlayer
+                  ownPlayerId={this.props.playerID}
                   G={this.props.G}
                   ctx={this.props.ctx}
                   playerId={playerElement.id}

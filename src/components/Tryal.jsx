@@ -89,12 +89,15 @@ export default class Tryal extends React.Component {
     }
 
     if(this.state.selectedCardIndex === null) {
-      return this.renderTryalCards(getPlayerState(this.props.G, this.props.ctx, this.playerInTryal).tryalCards);
+      return <div class="view-width">
+        Reveal one of  {getPlayerState(this.props.G, this.props.ctx, this.playerInTryal).character}'s tryal cards
+        {this.renderTryalCards(getPlayerState(this.props.G, this.props.ctx, this.playerInTryal).tryalCards)};
+      </div>
     }
     else {
       return (
         <div>
-          Reveal Tryal Card {this.state.selectedCardIndex} of {this.playerInTryal}
+          Reveal Tryal Card {this.state.selectedCardIndex} of {getPlayerState(this.props.G, this.props.ctx, this.playerInTryal).character}
           <Button onClick={() => this.confirmMove()}>Confirm</Button><Button onClick={() => {this.cancelMove()}}>Cancel</Button>
         </div>
       )

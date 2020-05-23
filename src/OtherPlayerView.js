@@ -68,6 +68,22 @@ export class ViewOfOtherPlayer extends React.Component {
     );
 
     let allAppliedCards = [...playerState.appliedGreenCards, ...playerState.appliedRedCards, ...playerState.appliedBlueCards];
+    
+    let cardCount = {};
+    for(let appliedCard of allAppliedCards) {
+      if(cardCount[appliedCard.type] === undefined) {
+        cardCount[appliedCard.type] = 1;
+      }
+      else {
+        cardCount[appliedCard.type] = cardCount[appliedCard.type] + 1;
+      }
+    }
+    let appliedCardsToRender = [];
+    for(let type in cardCount) {
+      appliedCardsToRender.push(
+        <div>{type}: {cardCount[type]}</div>
+      )
+    }
     let playerName = this.props?.playerMeta?.name
     return (
       <button className="other-player-details" onClick={() => {this.clickedPlayer(this.props.playerId)}}>
@@ -79,6 +95,10 @@ export class ViewOfOtherPlayer extends React.Component {
         </div>
         
         <Character character={playerState.character} />
+
+        <div class="applied-salem-cards">
+          {appliedCardsToRender}
+        </div>
 
         <div class="tryal-card-container">
           {playerState.tryalCards.map((tryalCard) => {

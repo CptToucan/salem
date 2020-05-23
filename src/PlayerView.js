@@ -90,19 +90,21 @@ class PlayerView extends React.Component {
   generateLogMessagesForTextArea() {
     let logMessages = this.props.G.logMessages;
     let logMessagesToShow = [];
-    let playerState = getPlayerState(this.props.G, this.props.ctx, this.props.playerID);
+    let playerState = getPlayerState(
+      this.props.G,
+      this.props.ctx,
+      this.props.playerID
+    );
     let isWitch = playerState.isWitch;
 
-    for(let message of logMessages) {
-      if(message.includes("WITCH:")) {
-        if(isWitch) {
+    for (let message of logMessages) {
+      if (message.includes("WITCH:")) {
+        if (isWitch) {
           logMessagesToShow.push(<div>{message}</div>);
         }
-      }
-      else {
+      } else {
         logMessagesToShow.push(<div>{message}</div>);
       }
-
     }
 
     return logMessagesToShow;
@@ -113,7 +115,7 @@ class PlayerView extends React.Component {
     let drawerAnchor = "bottom";
 
     let logMessages = this.generateLogMessagesForTextArea();
-
+    let isPlayerDead = getPlayerState(this.props.G, this.props.ctx, this.props.playerID).isDead;
 
     return (
       <div className={classes.root}>
@@ -121,7 +123,9 @@ class PlayerView extends React.Component {
         <Grid container className={classes.parentGrid} spacing={0}>
           <Grid item className={classes.grid} xs={12}></Grid>
           <Grid item className={classes.grid} xs={12}>
-            <div className="log-messages" rows="10">{logMessages}</div>
+            <div className="log-messages" rows="10">
+              {logMessages}
+            </div>
           </Grid>
           <Grid item className={classes.grid} xs={6}>
             <Button
@@ -175,12 +179,15 @@ class PlayerView extends React.Component {
           <Grid item className={classes.grid} xs={12}>
             <Button
               className={classes.button}
-              disabled={!this.props.isPlayerActive}
+              disabled={!this.props.isPlayerActive || getPlayerState(this.props.G, this.props.ctx, this.props.playerID).isDead}
               variant="contained"
               size="large"
-              onClick={() => {this.props.clickedMakeMove()}}
+              onClick={() => {
+                this.props.clickedMakeMove();
+              }}
             >
-              Make a move
+              {isPlayerDead && "You are dead."}
+              {!isPlayerDead && "Make a move"}
             </Button>
           </Grid>
 
@@ -191,15 +198,17 @@ class PlayerView extends React.Component {
               this.toggleDrawer(drawerAnchor, false);
             }}
           >
-            <HandView
-              hand={
-                getPlayerState(
-                  this.props.G,
-                  this.props.ctx,
-                  this.props.playerID
-                ).hand
-              }
-            />
+            {this.state[drawerAnchor] && (
+              <HandView
+                hand={
+                  getPlayerState(
+                    this.props.G,
+                    this.props.ctx,
+                    this.props.playerID
+                  ).hand
+                }
+              />
+            )}
           </Drawer>
 
           <div className="open-salem-hand">
@@ -221,12 +230,17 @@ class PlayerView extends React.Component {
             this.toggleTryal(false);
           }}
         >
-          <TryalView
-            tryalCards={
-              getPlayerState(this.props.G, this.props.ctx, this.props.playerID)
-                .tryalCards
-            }
-          />
+          {this.state.showingTryal && (
+            <TryalView
+              tryalCards={
+                getPlayerState(
+                  this.props.G,
+                  this.props.ctx,
+                  this.props.playerID
+                ).tryalCards
+              }
+            />
+          )}
         </Backdrop>
         <Backdrop
           className={classes.backdrop}
@@ -235,13 +249,15 @@ class PlayerView extends React.Component {
             this.toggleCharacter(false);
           }}
         >
-          <CharacterView
-            playerState={getPlayerState(
-              this.props.G,
-              this.props.ctx,
-              this.props.playerID
-            )}
-          />
+          {this.state.showingCharacter && (
+            <CharacterView
+              playerState={getPlayerState(
+                this.props.G,
+                this.props.ctx,
+                this.props.playerID
+              )}
+            />
+          )}
         </Backdrop>
         <Backdrop
           className={classes.backdrop}
@@ -250,13 +266,15 @@ class PlayerView extends React.Component {
             this.toggleApplied(false);
           }}
         >
-          <AppliedCardsView
-            playerState={getPlayerState(
-              this.props.G,
-              this.props.ctx,
-              this.props.playerID
-            )}
-          />
+          {this.state.showingApplied && (
+            <AppliedCardsView
+              playerState={getPlayerState(
+                this.props.G,
+                this.props.ctx,
+                this.props.playerID
+              )}
+            />
+          )}
         </Backdrop>
         <Backdrop
           className={classes.backdrop}
@@ -265,14 +283,16 @@ class PlayerView extends React.Component {
             this.toggleOthers(false);
           }}
         >
-          <OtherPlayerView
-            G={this.props.G}
-            ctx={this.props.ctx}
-            ownPlayerId={this.props.playerID}
-            alivePlayers={this.props.G.alivePlayers}
-            allPlayerStates={this.props.G.playerState}
-            gameMeta={this.props.gameMetadata}
-          />
+          {this.state.showingOthers && (
+            <OtherPlayerView
+              G={this.props.G}
+              ctx={this.props.ctx}
+              ownPlayerId={this.props.playerID}
+              alivePlayers={this.props.G.alivePlayers}
+              allPlayerStates={this.props.G.playerState}
+              gameMeta={this.props.gameMetadata}
+            />
+          )}
         </Backdrop>
       </div>
     );

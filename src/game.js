@@ -205,7 +205,38 @@ function getIdentifierString(G, ctx, gameMetadata, playerId) {
   return identifierString;
 }
 
+function witchesWin(G, ctx) {
+  let witchesWin = true;
+  for (let player of G.alivePlayers) {
+    let playerState = getPlayerState(G, ctx, player);
+    if (playerState.isWitch !== true) {
+      witchesWin = false;
+      break;
+    }
+  }
+
+  return witchesWin;
+}
+
+function townsPeopleWin(G, ctx) {
+  let townsPeopleWin = true;
+  for (let player of G.alivePlayers) {
+    let playerState = getPlayerState(G, ctx, player);
+
+    for (let tryalCard of playerState.tryalCards) {
+      if (tryalCard.type === "WITCH" && tryalCard.isRevealed !== true) {
+        townsPeopleWin = false;
+        break;
+      }
+    }
+  }
+
+  return townsPeopleWin;
+}
+
 export const Salem = {
+  minPlayers: 4,
+  maxPlayers: 12,
   name: "Salem",
   setup: (ctx) => {
     let salemDeck = [];
@@ -335,11 +366,9 @@ export const Salem = {
         logMessage(
           G,
           ctx,
-          `The witches have given ${getPlayerState(
-            G,
-            ctx,
-            playerToAssignBlackCat
-          ).character} the black cat!`
+          `The witches have given ${
+            getPlayerState(G, ctx, playerToAssignBlackCat).character
+          } the black cat!`
         );
       },
       onBegin: (G, ctx) => {
@@ -484,6 +513,7 @@ export const Salem = {
                 G.isConspiracy = true;
                 G.hasCheckedBlackCatForConspiracy = false;
               } else if (card.type === "NIGHT") {
+                let foundConstable = false;
                 let playersToTakeToNight = {};
                 let constableToTakeToNight = {};
                 for (let player of G.alivePlayers) {
@@ -497,6 +527,7 @@ export const Salem = {
                   }
 
                   if (playerState.isConstable) {
+                    foundConstable = true;
                     constableToTakeToNight[player] = {
                       stage: "nightConstable",
                       moveLimit: 1,
@@ -507,16 +538,26 @@ export const Salem = {
                 removeCardFromPlayersHand(G, ctx, card, ctx.currentPlayer);
                 addCardToDiscardPile(G, ctx, card, ctx.currentPlayer);
 
-                ctx.events.setActivePlayers({
-                  value: playersToTakeToNight,
-                  next: {
-                    value: constableToTakeToNight,
+                if (foundConstable) {
+                  ctx.events.setActivePlayers({
+                    value: playersToTakeToNight,
+                    next: {
+                      value: constableToTakeToNight,
+                      next: {
+                        all: "nightTryal",
+                        moveLimit: 1,
+                      },
+                    },
+                  });
+                } else {
+                  ctx.events.setActivePlayers({
+                    value: playersToTakeToNight,
                     next: {
                       all: "nightTryal",
                       moveLimit: 1,
                     },
-                  },
-                });
+                  });
+                }
 
                 G.isNight = true;
               } else {
@@ -651,10 +692,28 @@ export const Salem = {
 
                 if (isWitchRevealed(G, ctx, targetPlayer)) {
                   killPlayer(G, ctx, targetPlayer);
-                  logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, targetPlayer)} has been revealed as a witch!. They are now dead.`)
+                  logMessage(
+                    G,
+                    ctx,
+                    `${getIdentifierString(
+                      G,
+                      ctx,
+                      meta,
+                      targetPlayer
+                    )} has been revealed as a witch!. They are now dead.`
+                  );
                 } else if (allTryalCardsRevealed(G, ctx, targetPlayer)) {
                   killPlayer(G, ctx, targetPlayer);
-                  logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, targetPlayer)} had all their Tryal cards revealed!. They are now dead.`)
+                  logMessage(
+                    G,
+                    ctx,
+                    `${getIdentifierString(
+                      G,
+                      ctx,
+                      meta,
+                      targetPlayer
+                    )} had all their Tryal cards revealed!. They are now dead.`
+                  );
                 }
 
                 if (G.blackCatTryal === true) {
@@ -667,7 +726,16 @@ export const Salem = {
                 } else {
                   ctx.events.setStage("playCards");
                   removeCardColourFromPlayer(G, ctx, "RED", targetPlayer);
-                  logMessage(G, ctx, `Removing red cards applied to ${getIdentifierString(G, ctx, meta, targetPlayer)}`)
+                  logMessage(
+                    G,
+                    ctx,
+                    `Removing red cards applied to ${getIdentifierString(
+                      G,
+                      ctx,
+                      meta,
+                      targetPlayer
+                    )}`
+                  );
                 }
 
                 updatePlayerRoles(G, ctx);
@@ -730,7 +798,11 @@ export const Salem = {
                       alivePlayerState._pickedTryalCard
                     );
 
-                    logPlayerMessage(G, ctx, `The Tryal Card you took was a ${alivePlayerState._pickedTryalCard.type} card!`)
+                    logPlayerMessage(
+                      G,
+                      ctx,
+                      `The Tryal Card you took was a ${alivePlayerState._pickedTryalCard.type} card!`
+                    );
                     alivePlayerState._pickedTryalCard = null;
                     alivePlayerState.tryalCards = ctx.random.Shuffle(
                       newAlivePlayerTryalCards
@@ -758,7 +830,16 @@ export const Salem = {
                   G.nightVotes[playerId]++;
                 }
 
-                logWitchMessage(G, ctx, `${getIdentifierString(G, ctx, meta, playerId)} received a vote to be killed`)
+                logWitchMessage(
+                  G,
+                  ctx,
+                  `${getIdentifierString(
+                    G,
+                    ctx,
+                    meta,
+                    playerId
+                  )} received a vote to be killed`
+                );
               },
             },
           },
@@ -767,7 +848,16 @@ export const Salem = {
             moves: {
               savePlayer(G, ctx, playerId, meta) {
                 G.nightSave = playerId;
-                logPlayerMessage(G, ctx, `As the constable you voted to save ${getIdentifierString(G, ctx, meta, playerId)}`)
+                logPlayerMessage(
+                  G,
+                  ctx,
+                  `As the constable you voted to save ${getIdentifierString(
+                    G,
+                    ctx,
+                    meta,
+                    playerId
+                  )}`
+                );
               },
             },
           },
@@ -782,7 +872,16 @@ export const Salem = {
                   tryalCard.isRevealed = true;
                   newPlayersConfessed.push(playerWhoMoved);
                   G.playersConfessed = newPlayersConfessed;
-                  logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, ctx.currentPlayer)} confessed revealing a ${tryalCard.type} card`)
+                  logMessage(
+                    G,
+                    ctx,
+                    `${getIdentifierString(
+                      G,
+                      ctx,
+                      meta,
+                      ctx.currentPlayer
+                    )} confessed revealing a ${tryalCard.type} card`
+                  );
                 }
 
                 let isLastPersonToConfess =
@@ -791,7 +890,6 @@ export const Salem = {
                   let playersWithVotes = [];
                   for (let playerId in G.nightVotes) {
                     playersWithVotes.push(playerId);
-                    
                   }
 
                   let playerToKill;
@@ -806,10 +904,26 @@ export const Salem = {
                   }
 
                   let playerToSave = G.nightSave;
-                  logMessage(G, ctx, `The witches tried to kill ${getIdentifierString(G, ctx, meta, playerToKill)}`)
-                  logMessage(G, ctx, `The constable saved ${getIdentifierString(G, ctx, meta, playerToSave)}`)
-
-                  
+                  logMessage(
+                    G,
+                    ctx,
+                    `The witches tried to kill ${getIdentifierString(
+                      G,
+                      ctx,
+                      meta,
+                      playerToKill
+                    )}`
+                  );
+                  logMessage(
+                    G,
+                    ctx,
+                    `The constable saved ${getIdentifierString(
+                      G,
+                      ctx,
+                      meta,
+                      playerToSave
+                    )}`
+                  );
 
                   // Kill player who hasnt been saved
 
@@ -822,18 +936,44 @@ export const Salem = {
                     !playerDidConfess &&
                     !hasCardAgainst(G, ctx, "ASYLUM", playerToKill)
                   ) {
-                    logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, playerToKill)} did not confess, so they are now dead`)
+                    logMessage(
+                      G,
+                      ctx,
+                      `${getIdentifierString(
+                        G,
+                        ctx,
+                        meta,
+                        playerToKill
+                      )} did not confess, so they are now dead`
+                    );
                     killPlayer(G, ctx, playerToKill);
                   }
 
                   let playersToKill = [];
                   for (let player of G.alivePlayers) {
-                    if (isWitchRevealed(G, ctx, playerWhoMoved) ) {
+                    if (isWitchRevealed(G, ctx, playerWhoMoved)) {
                       playersToKill.push(player);
-                      logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, player)} revealed a witch card in confession, so they are now dead`)
-                    }
-                    else if(allTryalCardsRevealed(G, ctx, playerWhoMoved)) {
-                      logMessage(G, ctx, `${getIdentifierString(G, ctx, meta, player)} revealed their last Tryal card, so they are now dead`)
+                      logMessage(
+                        G,
+                        ctx,
+                        `${getIdentifierString(
+                          G,
+                          ctx,
+                          meta,
+                          player
+                        )} revealed a witch card in confession, so they are now dead`
+                      );
+                    } else if (allTryalCardsRevealed(G, ctx, playerWhoMoved)) {
+                      logMessage(
+                        G,
+                        ctx,
+                        `${getIdentifierString(
+                          G,
+                          ctx,
+                          meta,
+                          player
+                        )} revealed their last Tryal card, so they are now dead`
+                      );
                       playersToKill.push(player);
                     }
                   }
@@ -862,5 +1002,16 @@ export const Salem = {
         },
       },
     },
+  },
+
+  endIf: (G, ctx) => {
+    // All witch cards revealed
+    if (townsPeopleWin(G, ctx)) {
+      return { winner: "Townspeople" };
+    }
+    // Everyone alive is witch
+    if (witchesWin(G, ctx)) {
+      return { winner: "Witches" };
+    }
   },
 };

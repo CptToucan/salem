@@ -59,6 +59,13 @@ export function killPlayer(G, ctx, targetPlayer) {
 
       cardsForDiscard.push(...playerState.appliedRedCards, ...playerState.appliedBlueCards, ...playerState.appliedGreenCards, ...playerState.hand);
 
+      let newTryalCards = [];
+      for(let tryalCard of playerState.tryalCards) {
+        tryalCard.isRevealed = true;
+
+        newTryalCards.push(tryalCard);
+      }
+      playerState.tryalCards = newTryalCards;
       playerState.appliedRedCards = [];
       playerState.appliedBlueCards = [];
       playerState.appliedGreenCards = [];

@@ -141,6 +141,13 @@ class SalemBoard extends React.Component {
     });
 
     const { classes } = this.props;
+
+    if(this.props?.ctx?.gameover) {
+      return <div>
+        {this.props.ctx.gameover.winner} win!
+      </div>
+    }
+
     return (
       <div>
         <ThemeProvider theme={theme}>
@@ -363,179 +370,9 @@ class SalemBoard extends React.Component {
           </Grid>
         );
       }
-
-      /*
-      else if(this.props.G.alivePlayers.includes(this.props.playerID)) {
-        return <div>{this.props.ctx.currentPlayer} is playing </div>;
-      }
-      else {
-        return (<div>You're dead... bad luck</div>)
-      }
-      */
     }
   }
 }
 
 export default withStyles(useStyles)(SalemBoard);
 
-/** if (this.props.ctx.phase === "dawn") {
-      let characters = [];
-
-      let isWitch = this.props.G.playerState[this.props.playerID].isWitch;
-
-      if (isWitch) {
-        if (this.props.playerID === this.props.ctx.currentPlayer) {
-          for (
-            let playerId = 0;
-            playerId < this.props.ctx.numPlayers;
-            playerId++
-          ) {
-            let characterName = this.props.G.playerState[playerId].character;
-            let character = (
-              <Character
-                key={characterName}
-                character={characterName}
-                onClick={() => this.dawnClickPlayer(playerId)}
-              />
-            );
-            characters.push(character);
-          }
-
-          return <div> {characters} </div>;
-        } else {
-          return <div> Your fellow witch is voting on the black cat... </div>;
-        }
-      } else {
-        return <div>Dawn is taking place...</div>;
-      }
-    }
-
-    if (this.props.ctx.phase === "mainGame") {
-      if (
-        this.props.ctx.activePlayers &&
-        this.props.ctx.activePlayers[this.props.playerID]
-      ) {
-        let stage = this.props.ctx.activePlayers[this.props.playerID];
-        if (stage === "drawCards") {
-          return (
-            <div>
-              <Button onClick={() => this.drawCard()}> Draw card</Button>
-            </div>
-          );
-        } else if (stage === "playCards") {
-          return (
-            <div>
-              <PlayCard
-                G={this.props.G}
-                ctx={this.props.ctx}
-                playerID={this.props.playerID}
-                makeMove={(card, player, targetPlayer, selectedCards) => {
-                  this.playCard(card, player, targetPlayer, selectedCards);
-                }}
-              />
-              <Button onClick={() => this.props.events.endTurn()}>
-                End Turn
-              </Button>
-            </div>
-          );
-        } else if (stage === "tryal") {
-          return (
-            <Tryal
-              G={this.props.G}
-              ctx={this.props.ctx}
-              playerID={this.props.playerID}
-              selectTryalCard={(cardIndex, player) => {
-                this.revealTryalCard(cardIndex, player);
-              }}
-            />
-          );
-        } else if (stage === "nightWitch") {
-          return (
-            <div>
-              <Night
-                G={this.props.G}
-                ctx={this.props.ctx}
-                playerID={this.props.playerID}
-                playerSelected={(selectedPlayer) =>
-                  this.witchSelectKill(selectedPlayer)
-                }
-              />
-            </div>
-          );
-        } else if (stage === "nightConstable") {
-          return (
-            <div>
-              <NightConstable
-                G={this.props.G}
-                ctx={this.props.ctx}
-                playerID={this.props.playerID}
-                playerSelected={(selectedPlayer) =>
-                  this.constableSelectSave(selectedPlayer)
-                }
-              />
-            </div>
-          );
-        } else if (stage === "nightTryal") {
-          return (
-            <div>
-              <NightTryal
-                G={this.props.G}
-                ctx={this.props.ctx}
-                playerID={this.props.playerID}
-                confession={(tryalCard) => {this.confession(tryalCard)}}
-              />
-            </div>
-          );
-        } else if (stage === "conspiracy") {
-          return (
-            <div>
-              <Conspiracy
-                G={this.props.G}
-                ctx={this.props.ctx}
-                playerID={this.props.playerID}
-                pickedTryal={(tryalCardIndex) => {this.pickedTryalCard(tryalCardIndex)}}
-              />
-            </div>
-          );
-        }
-      } else if (this.props.G.isNight) {
-        return <div>Night time, pray you're not next to die...</div>;
-      }
-      else if(this.props.G.isTryal) {
-        return <div>A tryal is taking place...</div>
-      }
-      else if (this.props.G.isConspiracy) {
-        return <div>The conspiracy is still taking place...</div>
-      } else if (this.props.playerID === this.props.ctx.currentPlayer) {
-        if (
-          hasCardAgainst(
-            this.props.G,
-            this.props.ctx,
-            "STOCKS",
-            this.props.ctx.currentPlayer
-          )
-        ) {
-          return (
-            <div>
-              <Button onClick={() => this.props.events.endTurn()}>
-                End Turn
-              </Button>
-            </div>
-          );
-        } else {
-          return (
-            <div>
-              <Button onClick={() => this.playCards()}> Play cards</Button>
-              <Button onClick={() => this.drawCards()}> Draw cards</Button>
-            </div>
-          );
-        }
-      } else if(this.props.G.alivePlayers.includes(this.props.playerID)) {
-        return <div>{this.props.ctx.currentPlayer} is playing </div>;
-      }
-      else {
-        return (<div>You're dead... bad luck</div>)
-      }
-    } else {
-      return <div>Normal phase</div>;
-    } */

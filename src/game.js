@@ -572,10 +572,14 @@ export const Salem = {
                     meta,
                     ctx.currentPlayer
                   )} has drawn a card...`
-
                 );
+
+
                 logPlayerMessage(G, ctx, `You drew a ${cardDrawn.type}`, ctx.currentPlayer);
                 G.drawnCardsThisTurn++;
+
+                logMessage(G, ctx, `There are ${G.salemDeck.length} cards left in the deck`
+                )
               },
             },
           },

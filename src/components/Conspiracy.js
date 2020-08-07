@@ -1,11 +1,11 @@
-import React from 'react';
-import { getPlayerState } from '../utils/player';
+import React from "react";
+import { getPlayerState } from "../utils/player";
 import TryalCard from "./TryalCard";
 import Button from "@material-ui/core/Button";
 import Swiper from "react-id-swiper";
+import { getIdentifierString } from "../game";
 
 export default class Conspiracy extends React.Component {
-
   selectTryalCard(cardIndex) {
     this.props.pickedTryal(cardIndex);
   }
@@ -13,7 +13,7 @@ export default class Conspiracy extends React.Component {
   renderTryalCards(tryalCards) {
     const params = {
       centeredSlides: true,
-      slidesPerView: 2
+      slidesPerView: 2,
     };
 
     return (
@@ -21,18 +21,21 @@ export default class Conspiracy extends React.Component {
         <Swiper {...params}>
           {tryalCards.map((card, index) => (
             <div className="salem-card-swiper">
-              <TryalCard card={card} show={card.isRevealed} onClick={(card, event) => {
-                if(!card.isRevealed) {
-                  this.selectTryalCard(index);
-                }
-              }} />
+              <TryalCard
+                card={card}
+                show={card.isRevealed}
+                onClick={(card, event) => {
+                  if (!card.isRevealed) {
+                    this.selectTryalCard(index);
+                  }
+                }}
+              />
             </div>
           ))}
         </Swiper>
       </div>
     );
   }
-
 
   renderNeighbourTryalCards() {
     let G = this.props.G;
@@ -43,15 +46,15 @@ export default class Conspiracy extends React.Component {
 
     let foundIndex;
 
-    for(let i = 0; i < alivePlayers.length; i++) {
-      if(playerID === alivePlayers[i]) {
+    for (let i = 0; i < alivePlayers.length; i++) {
+      if (playerID === alivePlayers[i]) {
         foundIndex = i;
         break;
       }
     }
 
     let indexOfNeighbour = foundIndex + 1;
-    if(indexOfNeighbour >= alivePlayers.length) {
+    if (indexOfNeighbour >= alivePlayers.length) {
       indexOfNeighbour = 0;
     }
 
@@ -60,42 +63,15 @@ export default class Conspiracy extends React.Component {
 
     let tryalCards = neighbourPlayerState.tryalCards;
 
-    return this.renderTryalCards(tryalCards);
-    for(let i = 0; i < tryalCards.length; i++) {
-      let tryalCard = tryalCards[i];
-      if(tryalCard.isRevealed) {
-        tryalCardsToRender.push(
-          <TryalCard
-            key={tryalCard.id}
-            card={tryalCard}
-            onClick={()=> {
-            }}
-          />
-        )
-      }
-      else {
-        tryalCardsToRender.push(
-          <TryalCard
-            key={tryalCard.id}
-            card={tryalCard}
-            onClick={()=> {
-              this.selectTryalCard(i)
-            }}
-          />
-        )
-      }
- 
-     }
-
-     return tryalCardsToRender;
-    
+    return <div class="view-width">{this.renderTryalCards(tryalCards)}</div>;
   }
 
-  
   render() {
-    return (<div>
-      It is a conspiracy...
-      {this.renderNeighbourTryalCards()}
-    </div>)
+    return (
+      <div>
+        It is a conspiracy...
+        {this.renderNeighbourTryalCards()}
+      </div>
+    );
   }
 }
